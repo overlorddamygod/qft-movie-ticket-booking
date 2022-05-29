@@ -24,6 +24,7 @@ const ShowPage = ({ movie, cinemas }) => {
 
   console.log(selectedCinemaId);
   useEffect(() => {
+    setSelectedSeats([])
     const screening = screenings[selectedTime];
     if (!screening) {
       // setSelectedSeats(screening.seats);
@@ -227,9 +228,9 @@ const ShowPage = ({ movie, cinemas }) => {
         <title>{movie.name}</title>
       </Head>
       <div>
-        <div className="flex items-center max-w-5xl mx-auto my-8">
+        <div className="flex flex-col justify-center items-center max-w-5xl mx-auto my-8 md:flex-row">
           <Banner src={movie.banner} alt={movie.name} />
-          <div className="ml-12">
+          <div className="mx-5 mt-3 md:ml-12">
             <h1 className="text-4xl">{movie.name}</h1>
             <p className="mt-2">
               🕗 {movie.length} mins{" "}
@@ -247,13 +248,13 @@ const ShowPage = ({ movie, cinemas }) => {
           </div>
         </div>
 
-        <div className="bg-[#0B2039] h-24">
-          <div className="flex max-w-5xl mx-auto h-full">
+        <div className="bg-[#0B2039]">
+          <div className="flex max-w-xl md:max-w-5xl mx-auto h-full md:flex-row flex-col px-5 md:px-0">
             <div className="flex-1 flex">
               <div className="flex items-center mr-4">
-                <div className="text-2xl">Date</div>
+                <div className="md:text-2xl">Date</div>
               </div>
-              <div className="flex">
+              <div className="flex justify-center md:justify-start flex-1">
                 {dates.map((d, index) => {
                   const formatetd = d.format("MMM-DD-ddd").split("-");
                   return (
@@ -265,15 +266,21 @@ const ShowPage = ({ movie, cinemas }) => {
                       }}
                     >
                       <div
-                        className="flex justify-center items-center text-white hover:bg-[#1A427C] select-none cursor-pointer"
+                        className="flex py-3 justify-center items-center text-white hover:bg-[#1A427C] select-none cursor-pointer"
                         style={{
                           background: selectedDate == index ? "#1A427C" : "",
                         }}
                       >
-                        <div className="px-6 flex flex-col justify-center items-center">
-                          <div className="text-sm">{formatetd[0]}</div>
-                          <div className="text-2xl">{formatetd[1]}</div>
-                          <div className="text-sm">{formatetd[2]}</div>
+                        <div className="px-4 md:px-6 flex flex-col justify-center items-center">
+                          <div className="text-xs md:text-sm">
+                            {formatetd[0]}
+                          </div>
+                          <div className="text-xl md:text-2xl">
+                            {formatetd[1]}
+                          </div>
+                          <div className="text-xs md:text-sm">
+                            {formatetd[2]}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -281,53 +288,57 @@ const ShowPage = ({ movie, cinemas }) => {
                 })}
               </div>
             </div>
-            <div className="w-1/5 flex flex-col justify-center">
-              <div className="text-2xl">Time</div>
-              <div>
-                <select
-                  id="time"
-                  className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
-                  onChange={(e) => {
-                    setSelectedTime(e.target.value);
-                  }}
-                >
-                  {Object.keys(screenings).length == 0 && (
-                    <option value="none">None</option>
-                  )}
-                  {Object.entries(screenings).map(([id, screening], index) => {
-                    return (
-                      <option key={id} value={id} selected={index == 0}>
-                        {moment(screening.start_time).format("LT")}
-                      </option>
-                    );
-                  })}
-                </select>
+            <div className="flex py-2 md:py-0">
+              <div className="flex flex-col justify-center flex-1 min-w-fit">
+                <div className="text-2xl">Time</div>
+                <div>
+                  <select
+                    id="time"
+                    className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
+                    onChange={(e) => {
+                      setSelectedTime(e.target.value);
+                    }}
+                  >
+                    {Object.keys(screenings).length == 0 && (
+                      <option value="none">None</option>
+                    )}
+                    {Object.entries(screenings).map(
+                      ([id, screening], index) => {
+                        return (
+                          <option key={id} value={id} selected={index == 0}>
+                            {moment(screening.start_time).format("LT")}
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+                </div>
               </div>
-            </div>
-            <div className="w-10 flex justify-center items-center">
-              <div className="w-0.5 h-3/4 bg-[#17283D]"></div>
-            </div>
-            <div className="w-1/5 flex flex-col justify-center">
-              <div className="text-2xl">Cinema</div>
-              <div>
-                <select
-                  className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
-                  onChange={() => {
-                    setSelectedCinemaId(event.target.value);
-                  }}
-                >
-                  {cinemas.map((cinema, index) => {
-                    return (
-                      <option
-                        selected={index == 0}
-                        key={cinema.id}
-                        value={cinema.id}
-                      >
-                        {cinema.name}
-                      </option>
-                    );
-                  })}
-                </select>
+              <div className="w-12 flex justify-center items-center flex-1">
+                <div className="w-0.5 h-3/4 bg-[#17283D]"></div>
+              </div>
+              <div className=" flex flex-col justify-center min-w-fit">
+                <div className="text-2xl">Cinema</div>
+                <div>
+                  <select
+                    className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
+                    onChange={() => {
+                      setSelectedCinemaId(event.target.value);
+                    }}
+                  >
+                    {cinemas.map((cinema, index) => {
+                      return (
+                        <option
+                          selected={index == 0}
+                          key={cinema.id}
+                          value={cinema.id}
+                        >
+                          {cinema.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -342,23 +353,25 @@ const ShowPage = ({ movie, cinemas }) => {
             {message}
           </div>
         ) : (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-5xl px-5 md:px-0 mx-auto">
             <div className="flex my-4 justify-end">
-              {Object.values(colorMap).map((color, i) => {
-                return (
-                  <div
-                    key={color.name}
-                    className="flex items-center mr-2 cursor-pointer select-none"
-                  >
-                    <Seat colors={color} />
-                    <p>{color.name}</p>
-                  </div>
-                );
-              })}
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-1">
+                {Object.values(colorMap).map((color, i) => {
+                  return (
+                    <div
+                      key={color.name}
+                      className="flex items-center mr-2 cursor-pointer select-none"
+                    >
+                      <Seat colors={color} className="w-8 h-6 mb-0 md:mb-0" />
+                      <p className="text-sm">{color.name}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="bg-[#09192C] flex my-4">
-              <div className="w-1/4">
+            <div className="bg-[#09192C] flex flex-col-reverse my-4 md:flex-row">
+              <div className="md:w-1/4 mt-3 md:mt-0">
                 <h3 className="text-2xl">Your Selected Seats</h3>
                 <p className="my-2">{selectedSeats.length} seats</p>
                 <div className="flex w-full flex-wrap">
@@ -374,18 +387,20 @@ const ShowPage = ({ movie, cinemas }) => {
                     );
                   })}
                 </div>
-                <button
-                  className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
-                  onClick={onReserve}
-                >
-                  Reserve
-                </button>
-                <button
-                  className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
-                  onClick={onPurchase}
-                >
-                  Purchase
-                </button>
+                <div className="my-5">
+                  <button
+                    className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
+                    onClick={onReserve}
+                  >
+                    Reserve
+                  </button>
+                  <button
+                    className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
+                    onClick={onPurchase}
+                  >
+                    Purchase
+                  </button>
+                </div>
               </div>
               <div className="flex-1 flex flex-col justify-center items-center">
                 {seatsGrid.map((row, rowIndex) => {

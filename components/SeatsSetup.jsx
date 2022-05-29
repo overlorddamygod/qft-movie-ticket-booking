@@ -255,12 +255,13 @@ export default SeatsSetup;
 
 export const Seat = ({
   onGridClick = () => {},
+  className="",
   colors = colorMap[0],
   columnIndex = "",
 }) => {
   return (
     <div
-      className="flex flex-col mr-2 mb-2 w-10 h-8 justify-center items-center border-4 rounded-t-xl rounded-b hover:scale-110 cursor-pointer select-none"
+      className={`${className} flex flex-col mr-1 mb-1 md:mr-2 md:mb-2 w-10 h-8 justify-center items-center border-4 rounded-t-xl rounded-b hover:scale-110 cursor-pointer select-none`}
       onClick={onGridClick}
       style={{
         borderColor: colors.border || "",
