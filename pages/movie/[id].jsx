@@ -6,25 +6,28 @@ import { Seat, colorMap, getColor } from "../../components/SeatsSetup";
 import Layout from "../../components/Layout";
 import Banner from "../../components/Banner";
 import moment from "moment";
+import Head from "next/head";
 
-const ShowPage = ({ movie,cinemas }) => {
+const ShowPage = ({ movie, cinemas }) => {
   const [seatsGrid, setSeatsGrid] = useState([[]]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [seatIdToGridMap, setSeatIdToGridMap] = useState({});
   const [dates, setDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(0);
-  const [selectedCinemaId, setSelectedCinemaId] = useState(cinemas.length > 0 ? cinemas[0].id : 0);
+  const [selectedCinemaId, setSelectedCinemaId] = useState(
+    cinemas.length > 0 ? cinemas[0].id : 0
+  );
   const [selectedTime, setSelectedTime] = useState("");
-  const [message, setMessage] = useState()
+  const [message, setMessage] = useState();
   const [loading, setLoading] = useState(true);
   const [screenings, setScreenings] = useState({});
 
-  console.log(selectedCinemaId)
+  console.log(selectedCinemaId);
   useEffect(() => {
-    const screening = screenings[selectedTime]
+    const screening = screenings[selectedTime];
     if (!screening) {
       // setSelectedSeats(screening.seats);
-      return
+      return;
     }
     // const now = moment()
     // setDates(dates => [...dates, now])
@@ -104,7 +107,11 @@ const ShowPage = ({ movie,cinemas }) => {
   };
 
   const onPurchase = async () => {
-    console.log(selectedSeats);
+    const screening = screenings[selectedTime];
+    if (!screening) {
+      return;
+    }
+    // console.log(selectedSeats);
     const { data, err } = await supabase.from("bookings").insert(
       selectedSeats.map((s) => {
         return {
@@ -126,9 +133,9 @@ const ShowPage = ({ movie,cinemas }) => {
   };
 
   const onReserve = async () => {
-    const screening = screenings[selectedTime]
+    const screening = screenings[selectedTime];
     if (!screening) {
-      return
+      return;
     }
     const { data, err } = await supabase.from("bookings").insert(
       selectedSeats.map((s) => {
@@ -152,61 +159,73 @@ const ShowPage = ({ movie,cinemas }) => {
   };
 
   useEffect(() => {
-   
-    onDateSelected()
-    return () => {
-      
-    }
-  }, [dates, selectedDate, selectedCinemaId])
+    onDateSelected();
+    return () => {};
+  }, [dates, selectedDate, selectedCinemaId]);
 
   const onDateSelected = async () => {
-    setLoading(true)
-    setMessage("")
-    setScreenings({})
-    const d = dates[selectedDate]
+    setLoading(true);
+    setMessage("");
+    setScreenings({});
+    const d = dates[selectedDate];
     if (!d) {
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
-    console.log(d.toString())
-    const {data, err} = await supabase.from("screenings").select(`
+    console.log(d.toString());
+    const { data, err } = await supabase
+      .from("screenings")
+      .select(
+        `
       id,
       start_time,
       movie:movie_id (id, name, release_date, trailer, banner, description, length ),
       cinema:cinema_id (id, name, address),
       booking:bookings!bookings_screening_id_fkey (id, seat_id, status),
       auditorium:auditorium_id ( id, name, rows, columns, seat:seats!seats_auditorium_id_fkey (id, row, number, available) )
-    `).eq("movie_id", movie.id)
+    `
+      )
+      .eq("movie_id", movie.id)
       .eq("cinema_id", selectedCinemaId)
-      .lt('start_time', d.endOf('day').toDate().toISOString())
-      .gt('start_time', d.startOf('day').toDate().toISOString())
+      .lt("start_time", d.endOf("day").toDate().toISOString())
+      .gt("start_time", d.startOf("day").toDate().toISOString());
     if (err) {
-      console.log(err)
+      console.log(err);
     }
     if (data.length === 0) {
       // setScreenings([])
-      setMessage("No screenings at this date")
-      setLoading(false)
-      return
+      setMessage("No screenings at this date");
+      setLoading(false);
+      return;
     }
-
-    const obj = {}
 
     for (let i = 0; i < data.length; i++) {
-      const screening = data[i]
-      obj[screening.id] = screening
+      const bookingObj = {};
+
+      for (let booking of data[i].booking) {
+        bookingObj[booking.seat_id] = booking;
+      }
+      data[i].booking = bookingObj;
     }
 
-    
-    setScreenings(obj)
-    setSelectedTime(data[0].id)
+    const obj = {};
 
-    setLoading(false)
-  }
+    for (let i = 0; i < data.length; i++) {
+      const screening = data[i];
+      obj[screening.id] = screening;
+    }
 
+    setScreenings(obj);
+    setSelectedTime(data[0].id);
+
+    setLoading(false);
+  };
 
   return (
     <Layout auto={false}>
+      <Head>
+        <title>{movie.name}</title>
+      </Head>
       <div>
         <div className="flex items-center max-w-5xl mx-auto my-8">
           <Banner src={movie.banner} alt={movie.name} />
@@ -218,10 +237,12 @@ const ShowPage = ({ movie,cinemas }) => {
                 {new Date(movie.release_date).getFullYear()}
               </span>
             </p>
-            <p className="my-3 text-sm text-[#455B77]">
-              {movie.description}
-            </p>
-            <Link href={movie.trailer}><button className="border-[#C6AA55] border-2 py-2 px-2 mt-4 rounded-md hover:scale-105">Watch Trailer</button></Link>
+            <p className="my-3 text-sm text-[#455B77]">{movie.description}</p>
+            <Link href={movie.trailer}>
+              <button className="border-[#C6AA55] border-2 py-2 px-2 mt-4 rounded-md hover:scale-105">
+                Watch Trailer
+              </button>
+            </Link>
             {/* <h2>{screening.auditorium.name}</h2> */}
           </div>
         </div>
@@ -236,12 +257,19 @@ const ShowPage = ({ movie,cinemas }) => {
                 {dates.map((d, index) => {
                   const formatetd = d.format("MMM-DD-ddd").split("-");
                   return (
-                    <div key={index} className="flex" onClick={() => {
-                      setSelectedDate(index);
-                    }}>
-                      <div className="flex justify-center items-center text-white hover:bg-[#1A427C] select-none cursor-pointer" style={{
-                        background: selectedDate == index ? "#1A427C" : "",
-                      }}>
+                    <div
+                      key={index}
+                      className="flex"
+                      onClick={() => {
+                        setSelectedDate(index);
+                      }}
+                    >
+                      <div
+                        className="flex justify-center items-center text-white hover:bg-[#1A427C] select-none cursor-pointer"
+                        style={{
+                          background: selectedDate == index ? "#1A427C" : "",
+                        }}
+                      >
                         <div className="px-6 flex flex-col justify-center items-center">
                           <div className="text-sm">{formatetd[0]}</div>
                           <div className="text-2xl">{formatetd[1]}</div>
@@ -256,20 +284,23 @@ const ShowPage = ({ movie,cinemas }) => {
             <div className="w-1/5 flex flex-col justify-center">
               <div className="text-2xl">Time</div>
               <div>
-                <select id="time" className="bg-transparent text-[#455B77] mt-1 text-lg w-full" onChange={
-                  (e) => {
-                    setSelectedTime(e.target.value)
-                  }
-                }>
-                  {Object.keys(screenings).length == 0 && <option value="none">None</option>}
+                <select
+                  id="time"
+                  className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
+                  onChange={(e) => {
+                    setSelectedTime(e.target.value);
+                  }}
+                >
+                  {Object.keys(screenings).length == 0 && (
+                    <option value="none">None</option>
+                  )}
                   {Object.entries(screenings).map(([id, screening], index) => {
                     return (
                       <option key={id} value={id} selected={index == 0}>
-                        {moment(screening.start_time).format('LT')}
+                        {moment(screening.start_time).format("LT")}
                       </option>
                     );
-                  }
-                  )}
+                  })}
                 </select>
               </div>
             </div>
@@ -279,11 +310,22 @@ const ShowPage = ({ movie,cinemas }) => {
             <div className="w-1/5 flex flex-col justify-center">
               <div className="text-2xl">Cinema</div>
               <div>
-                <select className="bg-transparent text-[#455B77] mt-1 text-lg w-full" onChange={() => {
-                  setSelectedCinemaId(event.target.value)
-                }}>
+                <select
+                  className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
+                  onChange={() => {
+                    setSelectedCinemaId(event.target.value);
+                  }}
+                >
                   {cinemas.map((cinema, index) => {
-                    return <option selected={index == 0} key={cinema.id} value={cinema.id}>{cinema.name}</option>
+                    return (
+                      <option
+                        selected={index == 0}
+                        key={cinema.id}
+                        value={cinema.id}
+                      >
+                        {cinema.name}
+                      </option>
+                    );
                   })}
                 </select>
               </div>
@@ -291,80 +333,87 @@ const ShowPage = ({ movie,cinemas }) => {
           </div>
         </div>
 
-        { loading ? <div className="max-w-5xl mx-auto py-20 text-center text-xl">Loading</div> : 
-          message ? <div className="max-w-5xl mx-auto py-20 text-center text-xl">{message}</div> :
-          <div className="max-w-5xl mx-auto">
-          <div className="flex my-4 justify-end">
-            {Object.values(colorMap).map((color, i) => {
-              return (
-                <div
-                  key={color.name}
-                  className="flex items-center mr-2 cursor-pointer select-none"
-                >
-                  <Seat colors={color} />
-                  <p>{color.name}</p>
-                </div>
-              );
-            })}
+        {loading ? (
+          <div className="max-w-5xl mx-auto py-20 text-center text-xl">
+            Loading
           </div>
-
-          <div className="bg-[#09192C] flex my-4">
-            <div className="w-1/4">
-              <h3 className="text-2xl">Your Selected Seats</h3>
-              <p className="my-2">{selectedSeats.length} seats</p>
-              <div className="flex w-full flex-wrap">
-                {selectedSeats.map((seat, i) => {
-                  return (
-                    <div
-                      key={seat.id}
-                      className="text-[#AF9A54] bg-[#142F4D] px-2.5 py-0.5 mr-2 mb-2 rounded-md"
-                    >
-                      {String.fromCharCode(65 + seatsGrid.length - seat.row) +
-                        seat.number}
-                    </div>
-                  );
-                })}
-              </div>
-              <button
-                className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
-                onClick={onReserve}
-              >
-                Reserve
-              </button>
-              <button
-                className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
-                onClick={onPurchase}
-              >
-                Purchase
-              </button>
-            </div>
-            <div className="flex-1 flex flex-col justify-center items-center">
-              {seatsGrid.map((row, rowIndex) => {
+        ) : message ? (
+          <div className="max-w-5xl mx-auto py-20 text-center text-xl">
+            {message}
+          </div>
+        ) : (
+          <div className="max-w-5xl mx-auto">
+            <div className="flex my-4 justify-end">
+              {Object.values(colorMap).map((color, i) => {
                 return (
-                  <div className="flex flex-row" key={rowIndex}>
-                    <div className="flex w-10 h-10 justify-center items-center text-center">
-                      {String.fromCharCode(64 + seatsGrid.length - rowIndex)}
-                    </div>
-                    {row.map((cell, columnIndex) => {
-                      const colors = getColor(cell.status);
-                      return (
-                        <Seat
-                          onGridClick={() => {
-                            onGridClick(rowIndex, columnIndex);
-                          }}
-                          colors={colors}
-                          columnIndex={cell.number}
-                          key={cell.id}
-                        />
-                      );
-                    })}
+                  <div
+                    key={color.name}
+                    className="flex items-center mr-2 cursor-pointer select-none"
+                  >
+                    <Seat colors={color} />
+                    <p>{color.name}</p>
                   </div>
                 );
               })}
             </div>
+
+            <div className="bg-[#09192C] flex my-4">
+              <div className="w-1/4">
+                <h3 className="text-2xl">Your Selected Seats</h3>
+                <p className="my-2">{selectedSeats.length} seats</p>
+                <div className="flex w-full flex-wrap">
+                  {selectedSeats.map((seat, i) => {
+                    return (
+                      <div
+                        key={seat.id}
+                        className="text-[#AF9A54] bg-[#142F4D] px-2.5 py-0.5 mr-2 mb-2 rounded-md"
+                      >
+                        {String.fromCharCode(65 + seatsGrid.length - seat.row) +
+                          seat.number}
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
+                  onClick={onReserve}
+                >
+                  Reserve
+                </button>
+                <button
+                  className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
+                  onClick={onPurchase}
+                >
+                  Purchase
+                </button>
+              </div>
+              <div className="flex-1 flex flex-col justify-center items-center">
+                {seatsGrid.map((row, rowIndex) => {
+                  return (
+                    <div className="flex flex-row" key={rowIndex}>
+                      <div className="flex w-10 h-10 justify-center items-center text-center">
+                        {String.fromCharCode(64 + seatsGrid.length - rowIndex)}
+                      </div>
+                      {row.map((cell, columnIndex) => {
+                        const colors = getColor(cell.status);
+                        return (
+                          <Seat
+                            onGridClick={() => {
+                              onGridClick(rowIndex, columnIndex);
+                            }}
+                            colors={colors}
+                            columnIndex={cell.number}
+                            key={cell.id}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-}
+        )}
       </div>
     </Layout>
   );
@@ -372,8 +421,7 @@ const ShowPage = ({ movie,cinemas }) => {
 
 export default ShowPage;
 
-export const getServerSideProps = async ({params, res}) => {
-
+export const getServerSideProps = async ({ params, res }) => {
   const movieId = params.id;
   const { data: movie, error } = await supabase
     .from("movies")
@@ -385,45 +433,47 @@ export const getServerSideProps = async ({params, res}) => {
     console.log(error);
   }
 
-  const { data: cinemas, error: cinemaerr } = await supabase.from("cinemas").select(`id, name, address`)
+  const { data: cinemas, error: cinemaerr } = await supabase
+    .from("cinemas")
+    .select(`id, name, address`);
 
   if (cinemaerr) {
-    console.log(error)
+    console.log(error);
   }
-// console.log(cinemas)
-//   const { data, error } = await supabase
-//     .from("screenings")
-//     .select(
-//       `
-//         id,
-//         start_time,
-//         movie:movie_id (id, name, release_date, trailer, banner, description, length ),
-//         cinema:cinema_id (id, name, address),
-//         booking:bookings!bookings_screening_id_fkey (id, seat_id, status),
-//         auditorium:auditorium_id ( id, name, rows, columns, seat:seats!seats_auditorium_id_fkey (id, row, number, available) )
-//       `
-//     )
-//     .eq("id", screeningId)
-//     .single();
+  // console.log(cinemas)
+  //   const { data, error } = await supabase
+  //     .from("screenings")
+  //     .select(
+  //       `
+  //         id,
+  //         start_time,
+  //         movie:movie_id (id, name, release_date, trailer, banner, description, length ),
+  //         cinema:cinema_id (id, name, address),
+  //         booking:bookings!bookings_screening_id_fkey (id, seat_id, status),
+  //         auditorium:auditorium_id ( id, name, rows, columns, seat:seats!seats_auditorium_id_fkey (id, row, number, available) )
+  //       `
+  //     )
+  //     .eq("id", screeningId)
+  //     .single();
 
-//   if (error) {
-//     console.log(error);
-//     res.statusCode = 404
-//     res.end();
-//     return { 
-//       error: "Not found"
-//     }
-//   }
-//   // console.log(data)
+  //   if (error) {
+  //     console.log(error);
+  //     res.statusCode = 404
+  //     res.end();
+  //     return {
+  //       error: "Not found"
+  //     }
+  //   }
+  //   // console.log(data)
 
-//   const bookingObj = {};
-//   data.booking = data.booking || []
+  //   const bookingObj = {};
+  //   data.booking = data.booking || []
 
-//   for (let i = 0; i < data.booking.length; i++) {
-//     bookingObj[data.booking[i].seat_id] = data.booking[i];
-//   }
+  //   for (let i = 0; i < data.booking.length; i++) {
+  //     bookingObj[data.booking[i].seat_id] = data.booking[i];
+  //   }
 
-//   data.booking = bookingObj;
+  //   data.booking = bookingObj;
   return {
     props: {
       cinemas,

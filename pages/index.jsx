@@ -6,11 +6,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import Link from "next/link";
 import Layout from "../components/Layout";
+import Head from "next/head";
 
 export default function Home({ movies, nowshowing }) {
   console.log(movies, nowshowing)
   return (
     <Layout>
+      <Head>
+        <title>QFT | Home</title>
+      </Head>
       <>
       <ShowCase header="Now Showing" movies={nowshowing}/>
       <ShowCase header="Movies" movies={movies}/>
