@@ -7,7 +7,7 @@ import Layout from "../../components/Layout";
 import Banner from "../../components/Banner";
 import moment from "moment";
 import Head from "next/head";
-import axios from "axios";
+import axiosClient from "../../utils/axiosClient";
 
 const ShowPage = ({ movie, cinemas }) => {
   const [seatsGrid, setSeatsGrid] = useState([[]]);
@@ -129,7 +129,7 @@ const ShowPage = ({ movie, cinemas }) => {
   }, [screening])
 
   const getScreeningById = async (id) => {
-    axios.get(`http://localhost:8080/api/v1/screening/${id}`, {
+    axiosClient.get(`api/v1/screening/${id}`, {
       headers: {
         Authorization: `${supabase.auth.currentSession.access_token}`,
       }
@@ -149,8 +149,8 @@ const ShowPage = ({ movie, cinemas }) => {
   // }, [selectedDate])
 
   const onGridClick = async (rowIndex, columnIndex) => {
-    const response = axios
-      .post("http://localhost:8080/api/v1/booking", {
+    const response = axiosClient
+      .post("api/v1/booking", {
         user_id: supabase.auth.currentUser.id,
         seat_id: seatsGrid[rowIndex][columnIndex].id,
         screening_id: screening.id,
@@ -256,12 +256,12 @@ const ShowPage = ({ movie, cinemas }) => {
     setMessage("");
     setScreenings({});
 
-    const url = `http://localhost:8080/api/v1/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`
+    const url = `api/v1/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`
 
     if (date) {
       url += `&date=${date}`
     }
-    axios.get(url, {
+    axiosClient.get(url, {
       headers: {
         Authorization: `${supabase.auth.currentSession.access_token}`,
       }
