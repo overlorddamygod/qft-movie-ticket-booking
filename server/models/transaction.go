@@ -18,8 +18,5 @@ type Transaction struct {
 }
 
 func (t *Transaction) IsExpired() bool {
-	if t.Id.String() == "00000000-0000-0000-0000-000000000000" {
-		return false
-	}
-	return time.Since(t.CreatedAt) > time.Minute
+	return t.ExpiresAt.Before(time.Now())
 }

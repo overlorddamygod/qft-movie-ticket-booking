@@ -16,6 +16,8 @@ type Booking struct {
 	Status        int         `gorm:"column:status" json:"status"`
 	CreatedAt     time.Time   `gorm:"column:created_at" json:"created_at"`
 	Transaction   Transaction `gorm:"foreignKey:TransactionId" json:"transaction"`
+
+	Seat Seat `gorm:"foreignKey:SeatId" json:"seat"`
 	// UpdatedAt    time.Time
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
 }

@@ -81,6 +81,8 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 	fmt.Println(bookedMap)
 	// loop between screening.auditorium.seats
 
+	screening.Auditorium.SelectedSeats = make([]models.Seat, 0)
+
 	for i, seat := range screening.Auditorium.Seats {
 		refSeat := (&screening.Auditorium.Seats[i])
 		if seat.Available {
@@ -103,6 +105,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 				fmt.Println(val.UserId, user_id, val.UserId == user_uuid)
 				if val.UserId == user_uuid {
 					refSeat.Status = val.Status
+					screening.Auditorium.SelectedSeats = append(screening.Auditorium.SelectedSeats, *refSeat)
 				} else {
 					refSeat.Status = 3
 				}

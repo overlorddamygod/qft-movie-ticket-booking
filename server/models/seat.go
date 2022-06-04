@@ -11,7 +11,11 @@ type Seat struct {
 	Number       int       `gorm:"column:number" json:"number"`
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	Available    bool      `gorm:"column:available" json:"available"`
-	Status       int       `json:"status"`
+	Price        int       `gorm:"column:price" json:"price"`
+	Type         string    `gorm:"column:type" json:"type"`
+
+	Status int `gorm:"-" json:"status"`
+
 	// UpdatedAt    time.Time
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
 }

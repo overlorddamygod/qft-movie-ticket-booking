@@ -6,10 +6,11 @@ import (
 	"github.com/overlorddamygod/qft-server/configs"
 	"github.com/overlorddamygod/qft-server/controllers/booking"
 	"github.com/overlorddamygod/qft-server/controllers/screening"
+	"github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/middlewares"
 )
 
-func RegisterServer(config *configs.Config, router *gin.Engine, bookingC *booking.BookingController, screeningC *screening.ScreeningController) {
+func RegisterServer(config *configs.Config, router *gin.Engine, bookingC *booking.BookingController, screeningC *screening.ScreeningController, transactionC *transaction.TransactionController) {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{"content-type", "accept", "access-control-allow-origin", "origin", "authorization"},
@@ -19,11 +20,17 @@ func RegisterServer(config *configs.Config, router *gin.Engine, bookingC *bookin
 
 	v1 := router.Group("api/v1")
 	{
+		transactionGroup := v1.Group("transaction")
+		{
+			transactionGroup.Use(middlewares.IsLoggedIn())
+			transactionGroup.POST("", transactionC.GetOrCreateTransaction)
+		}
+
 		screeningGroup := v1.Group("screening")
 		{
-			screeningGroup.Use(middlewares.IsLoggedIn())
+			// screeningGroup.Use(middlewares.IsLoggedIn())
 			screeningGroup.GET("", screeningC.GetScreenings)
-			screeningGroup.GET("/:screening_id", screeningC.GetScreening)
+			screeningGroup.GET("/:screening_id", middlewares.IsLoggedIn(), screeningC.GetScreening)
 		}
 		bookingGroup := v1.Group("booking")
 		{

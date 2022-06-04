@@ -7,6 +7,7 @@ import (
 	"github.com/overlorddamygod/qft-server/configs"
 	"github.com/overlorddamygod/qft-server/controllers/booking"
 	"github.com/overlorddamygod/qft-server/controllers/screening"
+	"github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/db"
 	"github.com/overlorddamygod/qft-server/server"
 	"go.uber.org/fx"
@@ -20,6 +21,7 @@ func main() {
 			db.NewDB,
 			booking.NewBookingController,
 			screening.NewScreeningController,
+			transaction.NewTransactionController,
 			server.NewRouter,
 		),
 		fx.Populate(&configs.MainConfig),

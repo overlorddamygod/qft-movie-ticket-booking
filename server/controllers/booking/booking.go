@@ -50,7 +50,22 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 	// userUUID, err := uuid.Parse(params.UserID)
 
 	err := bc.db.Transaction(func(tx *gorm.DB) error {
-		result := tx.First(&transaction, "user_id = ? AND screening_id = ? AND expires_at > now()", params.UserID, params.ScreeningID)
+		var seat models.Seat
+		result := tx.First(&seat, "id = ?", params.SeatID)
+
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return errors.New("seat not found")
+			}
+
+			return errors.New("error getting seat")
+		}
+
+		if !seat.Available {
+			return errors.New("seat is not available")
+		}
+
+		result = tx.First(&transaction, "user_id = ? AND screening_id = ? AND expires_at > now()", params.UserID, params.ScreeningID)
 
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -71,23 +86,22 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 		fmt.Println("TRANSACTIONS: ", transaction)
 
-		// count number of bookings by transaction
-		var bookingCount int64
-		result = tx.Model(&models.Booking{}).Where("transaction_id = ?", transaction.Id).Count(&bookingCount)
-
-		if result.Error != nil {
-			return result.Error
-		}
-
-		if bookingCount >= 8 {
-			return errors.New("max bookings reached")
-		}
-
 		var booked models.Booking
 		result = tx.Joins("Transaction").First(&booked, `seat_id = ? AND auditorium_id = ? AND bookings.screening_id = ? AND "Transaction".expires_at > now()`, params.SeatID, params.AuditoriumID, params.ScreeningID)
 		if result.Error != nil {
 			if result.Error != gorm.ErrRecordNotFound {
 				return result.Error
+			}
+
+			var bookingCount int64
+			result = tx.Model(&models.Booking{}).Where("transaction_id = ?", transaction.Id).Count(&bookingCount)
+
+			if result.Error != nil {
+				return result.Error
+			}
+
+			if bookingCount >= 8 {
+				return errors.New("max bookings reached")
 			}
 
 			booking := models.Booking{
@@ -106,12 +120,17 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 			return nil
 		}
 
+		fmt.Println("ALREADY BOOKED")
+
 		if booked.UserId == params.UserID {
+			fmt.Println("HERE")
 			if booked.Transaction.IsExpired() {
 				return errors.New("transaction is expired")
 			}
+			fmt.Println("SAD")
 
 			if booked.Status == 2 {
+				fmt.Println("DELETING")
 				result := tx.Delete(&booked)
 
 				if result.Error != nil {
@@ -124,22 +143,6 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 		if !booked.Transaction.IsExpired() {
 			return errors.New("seat is already booked")
-		}
-
-		fmt.Println("SAD")
-
-		booking := models.Booking{
-			SeatId:        params.SeatID,
-			AuditoriumId:  params.AuditoriumID,
-			ScreeningId:   params.ScreeningID,
-			TransactionId: transaction.Id,
-			UserId:        params.UserID,
-			Status:        2,
-		}
-		if err := tx.Create(&booking).Error; err != nil {
-			fmt.Println("SAD", booking)
-			fmt.Println(err)
-			return err
 		}
 		return nil
 	}, &sql.TxOptions{

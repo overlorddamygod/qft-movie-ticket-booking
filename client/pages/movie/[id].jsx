@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Router, { useRouter } from "next/router";
 import { supabase } from "../../utils/supabaseClient";
 import { Seat, colorMap, getColor } from "../../components/SeatsSetup";
@@ -8,67 +8,69 @@ import Banner from "../../components/Banner";
 import moment from "moment";
 import Head from "next/head";
 import axiosClient from "../../utils/axiosClient";
+import Countdown from "../../components/Countdown";
+import AuthGuard from "../../components/AuthGuard";
 
 const ShowPage = ({ movie, cinemas }) => {
   const [seatsGrid, setSeatsGrid] = useState([[]]);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [seatIdToGridMap, setSeatIdToGridMap] = useState({});
   const [dates, setDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(0);
   const [selectedCinemaId, setSelectedCinemaId] = useState(
     cinemas.length > 0 ? cinemas[0].id : 0
   );
-  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedScreeningId, setSelectedScreeningId] = useState("");
   const [message, setMessage] = useState();
   const [loading, setLoading] = useState(true);
   const [screenings, setScreenings] = useState({});
   const [screening, setScreening] = useState({});
-
+  const [sessionExpiresAt, setSessionExpiresAt] = useState(null);
+  const [fromQuery, setFromQuery] = useState(false);
 
   useEffect(() => {
     const now = moment();
-    const _dates = []
+    const _dates = [];
 
     for (let i = 0; i < 6; i++) {
       const date = now.clone().add(i, "d");
-      _dates.push(date)
+      _dates.push(date);
     }
 
-    setDates(_dates)
+    setDates(_dates);
 
-    console.log("BEGINNING")
-    console.log(supabase.auth)
+    console.log("BEGINNING");
+    console.log(supabase.auth);
 
-    
-    const { query } = Router
-    console.log(query)
-    const queries = ["date", "date_index", "cinema_id", "screening_id"]
-    console.log(queries.every(q => Object.keys(query).includes(q)))
-    if (queries.every(q => Object.keys(query).includes(q))) { 
-      console.log("FOUND QUERY")
-      setSelectedDate(+query.date_index)
-      setSelectedCinemaId(query.cinema_id)
-      console.log(query)
-      setSelectedTime(query.screening_id);
-
+    const { query } = Router;
+    console.log(query);
+    const queries = ["date", "date_index", "cinema_id", "screening_id"];
+    console.log(queries.every((q) => Object.keys(query).includes(q)));
+    if (queries.every((q) => Object.keys(query).includes(q))) {
+      console.log("FOUND QUERY");
+      setSelectedDate(+query.date_index);
+      setSelectedCinemaId(query.cinema_id);
+      console.log(query);
+      setFromQuery(true);
+      setSelectedScreeningId(query.screening_id);
       // getScreeningById(query.screening_id)
     } else {
-      console.log("NO QUERY")
+      console.log("NO QUERY");
       setSelectedDate(0);
       const q = {
         date_index: 0,
         date: _dates[0].format("YYYY-MM-DD"),
-      }
+      };
       if (cinemas.length > 0) {
         setSelectedCinemaId(cinemas.length > 0 ? cinemas[0].id : 0);
-        q["screening_id"]= cinemas[0].id
+        q["cinema_id"] = cinemas[0].id;
       }
-      updateQuery(q)
+      updateQuery(q);
     }
     return () => {
-      setDates((dates) => []); 
+      setDates((dates) => []);
     };
   }, []);
+
 
   const updateQuery = (keyVal) => {
     for (let key in keyVal) {
@@ -79,87 +81,98 @@ const ShowPage = ({ movie, cinemas }) => {
       pathname: Router.pathname,
       query: {
         ...Router.query,
-        ...keyVal
+        ...keyVal,
       },
-    });
+    }, undefined, { scroll: false });
   };
 
   useEffect(() => {
-    if (selectedTime == "") return
+    console.log("LOLLLL", selectedScreeningId)
+    if (selectedScreeningId == "") return;
+
     setSelectedSeats([]);
-    console.log("FETCHING SCREENING FOR ID", selectedTime)
-    getScreeningById(selectedTime)
-  }, [selectedTime]);
+    console.log("FETCHING SCREENING FOR ID", selectedScreeningId);
+    getScreeningById(selectedScreeningId);
+  }, [selectedScreeningId]);
 
-  useEffect(()=> {
-    if (Object.keys(screening).length == 0 ) return
+  useEffect(() => {
+    if (Object.keys(screening).length == 0) return;
 
-    console.log("FOUND SCREENING FOR ID", selectedTime)
-    console.log("SCREENING", screening)
+    console.log("FOUND SCREENING FOR ID", selectedScreeningId);
+    console.log("SCREENING", screening);
 
-     const grid = Array(screening.auditorium.rows)
+    updateQuery({
+      screening_id: selectedScreeningId,
+    });
+
+    const grid = Array(screening.auditorium.rows)
       .fill(null)
       .map(() => Array(screening.auditorium.columns).fill(1));
 
-    const gridMap = {};
 
- 
     for (let seat of screening.auditorium.seats) {
-      // seat.status = seat.available ? 1 : 0;
-      // if (screening.booking[seat.id]) {
-      //   seat.status = screening.booking[seat.id].status;
-      // }
-
       grid[seat.row - 1][seat.number - 1] = seat;
-      gridMap[seat.id] = grid[seat.row - 1][seat.number - 1];
     }
-    setSeatIdToGridMap(gridMap);
-    // console.log(gridMap)
+    setSelectedSeats(screening.auditorium.selected_seats);
 
     setSeatsGrid(grid);
-    // console.log(`bookings:screening_id=eq.${screening.id}`)
-    // const bookings = supabase
-    //   .from(`bookings:screening_id=eq.${screening.id}`)
-    //   .on("INSERT", (payload) => {
-    //     console.log("Change received!", payload);
-    //     const { new: newBooking } = payload;
-    //     // ))
-    //   })
-    //   .subscribe();
-  }, [screening])
+  }, [screening]);
 
-  const getScreeningById = async (id) => {
-    axiosClient.get(`api/v1/screening/${id}`, {
-      headers: {
-        Authorization: `${supabase.auth.currentSession.access_token}`,
-      }
-    })
-      .then(res => {
-        console.log(res)
-        setScreening(res.data.data)
+  const getScreeningById = async (id, getSession = true) => {
+    axiosClient
+      .get(`api/v1/screening/${id}`, {
+        headers: {
+          Authorization: `${supabase.auth.currentSession?.access_token || " "}`,
+        },
       })
-      .catch(err => {
-        console.error(err)
+      .then((res) => {
+        console.log(res);
+        setScreening(res.data.data);
+        if (getSession) {
+          axiosClient
+            .post(
+              `api/v1/transaction`,
+              {
+                screening_id: +id,
+              },
+              {
+                headers: {
+                  Authorization: `${supabase.auth.currentSession.access_token}`,
+                },
+              }
+            )
+            .then((res) => {
+              console.log("EXPIRES", res.data.data.expires_at);
+              setSessionExpiresAt(
+                new Date(res.data.data.expires_at).getTime() / 1000
+              );
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
       })
-  }
-
-
-  // useEffect(()=> {
-  //   updateQuery("date", dates[0].format("yyyy-MM-DD"));
-  // }, [selectedDate])
+      .catch((err) => {
+        console.error(err);
+      });
+  };
 
   const onGridClick = async (rowIndex, columnIndex) => {
     const response = axiosClient
-      .post("api/v1/booking", {
-        user_id: supabase.auth.currentUser.id,
-        seat_id: seatsGrid[rowIndex][columnIndex].id,
-        screening_id: screening.id,
-        auditorium_id: screening.auditorium.id,
-      }, {
-        headers: {
-          Authorization: `${supabase.auth.currentSession.access_token}`,
+      .post(
+        "api/v1/booking",
+        {
+          user_id: supabase.auth.currentUser.id,
+          seat_id: seatsGrid[rowIndex][columnIndex].id,
+          screening_id: screening.id,
+          auditorium_id: screening.auditorium.id,
+        },
+        {
+          headers: {
+            Authorization: `${supabase.auth.currentSession.access_token}`,
+          },
         }
-      })
+      )
       .then((res) => {
         console.log(res);
 
@@ -183,7 +196,7 @@ const ShowPage = ({ movie, cinemas }) => {
         setSeatsGrid(grid);
         setSelectedSeats(selected);
         // onDateSelected();
-        getScreeningById(selectedTime)
+        getScreeningById(selectedScreeningId, false);
       })
       .catch((err) => {
         console.log(err);
@@ -191,7 +204,7 @@ const ShowPage = ({ movie, cinemas }) => {
   };
 
   const onPurchase = async () => {
-    const screening = screenings[selectedTime];
+    const screening = screenings[selectedScreeningId];
     if (!screening) {
       return;
     }
@@ -217,7 +230,7 @@ const ShowPage = ({ movie, cinemas }) => {
   };
 
   const onReserve = async () => {
-    const screening = screenings[selectedTime];
+    const screening = screenings[selectedScreeningId];
     if (!screening) {
       return;
     }
@@ -243,115 +256,126 @@ const ShowPage = ({ movie, cinemas }) => {
   };
 
   useEffect(() => {
-    console.log(selectedDate, dates,selectedCinemaId)
-    if (dates.length == 0 ) return
-    console.log("GETTING SCREENIGNS", dates, selectedDate, selectedCinemaId)
+    console.log(selectedDate, dates, selectedCinemaId);
+    if (dates.length == 0) return;
+
+    setSessionExpiresAt(null);
+    console.log("GETTING SCREENIGNS", dates, selectedDate, selectedCinemaId);
     // onDateSelected();
-    getScreenings(movie.id, selectedCinemaId, dates[selectedDate].format("YYYY-MM-DD"));
+    getScreenings(
+      movie.id,
+      selectedCinemaId,
+      dates[selectedDate].format("YYYY-MM-DD")
+    );
     return () => {};
   }, [dates, selectedDate, selectedCinemaId]);
 
-  const getScreenings = (movie_id, cinema_id, date, setTime = true) => {
+
+  const getScreenings = (movie_id, cinema_id, date, setScreeningId = true) => {
     setLoading(true);
     setMessage("");
     setScreenings({});
+    if ( !fromQuery ) {
+      setSelectedScreeningId("")
+    }
 
-    const url = `api/v1/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`
+    if (fromQuery) {
+      setFromQuery(false)
+    }
+
+    const url = `api/v1/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`;
 
     if (date) {
-      url += `&date=${date}`
+      url += `&date=${date}`;
     }
-    axiosClient.get(url, {
-      headers: {
-        Authorization: `${supabase.auth.currentSession.access_token}`,
-      }
-    }).then(res => {
-      const {data} = res.data
-      console.log("SAD",res.data.data)
+    axiosClient
+      .get(url, {
+        headers: {
+          Authorization: `${supabase.auth.currentSession?.access_token || " "}`,
+        },
+      })
+      .then((res) => {
+        const { data } = res.data;
+        console.log("SAD", res.data.data,fromQuery);
+        console.log("FROM",fromQuery)
 
-      if (data.length === 0) {
-        // setScreenings([])
-        setMessage("No screenings at this date");
+        if (data.length === 0) {
+          // setScreenings([])
+          setMessage("No screenings at this date");
+          setLoading(false);
+          return;
+        }
+
+        const obj = {};
+
+        for (let i = 0; i < data.length; i++) {
+          const screening = data[i];
+          obj[screening.id] = screening;
+        }
+
+        setScreenings(res.data.data);
+
+          if (!fromQuery)  {
+            if (setScreeningId) {
+              setSelectedScreeningId(data[0].id);
+            }
+            if (fromQuery) {
+              setFromQuery(false)
+            }
+          }
+        // console.log("FROM",fromQuery)
+        // if (setScreeningId) {
+        //   console.log("SELECTED", data[0].id)
+        //   setSelectedScreeningId(data[0].id);
+        //   // updateQuery({
+        //   //   screening_id: data[0].id,
+        //   // })
+        // }
         setLoading(false);
-        return;
+      })
+      .catch((err) => {
+        console.error(err);
+        setMessage("Error");
+        setLoading(false);
+      });
+  };
+
+  const seatsData = useMemo(() => {
+    return selectedSeats.reduce(
+      (acc, seat) => {
+        const pascalCase = seat.type[0].toUpperCase() + seat.type.slice(1);
+
+        if (pascalCase in acc.types) {
+          acc.types[pascalCase] = {
+            count: acc.types[pascalCase].count + 1,
+            price: acc.types[pascalCase].price + seat.price,
+          };
+        } else {
+          acc.types[pascalCase] = {
+            count: 1,
+            price: seat.price,
+          };
+        }
+        acc.total.price += seat.price;
+        acc.total.count += 1;
+        return acc;
+      },
+      {
+        total: {
+          count: 0,
+          price: 0,
+        },
+        types: {},
       }
+    );
+  }, [selectedSeats]);
 
-      const obj = {};
-
-      for (let i = 0; i < data.length; i++) {
-        const screening = data[i];
-        obj[screening.id] = screening;
-      }
-
-      setScreenings(res.data.data)
-      if (setTime) {
-        setSelectedTime(data[0].id);
-      }
-      setLoading(false)
-    }).catch(err => {
-      console.error(err)
-      setMessage("Error")
-      setLoading(false)
-    })
-  }
-
-  // const onDateSelected = async () => {
-  //   setLoading(true);
-  //   setMessage("");
-  //   setScreenings({});
-  //   const d = dates[selectedDate];
-  //   if (!d) {
-  //     setLoading(false);
-  //     return;
-  //   }
-  //   console.log(d.toString());
-  //   const { data, err } = await supabase
-  //     .from("screenings")
-  //     .select(
-  //       `
-  //     id,
-  //     start_time,
-  //     movie:movie_id (id, name, release_date, trailer, banner, description, length ),
-  //     cinema:cinema_id (id, name, address),
-  //     booking:bookings!bookings_screening_id_fkey ( seat_id, status),
-  //     auditorium:auditorium_id ( id, name, rows, columns, seat:seats!seats_auditorium_id_fkey (id, row, number, available) )
-  //   `
-  //     )
-  //     .eq("movie_id", movie.id)
-  //     .eq("cinema_id", selectedCinemaId)
-  //     .lt("start_time", d.endOf("day").toDate().toISOString())
-  //     .gt("start_time", d.startOf("day").toDate().toISOString());
-  //   if (err) {
-  //     console.log(err);
-  //   }
-  //   if (data.length === 0) {
-  //     // setScreenings([])
-  //     setMessage("No screenings at this date");
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   for (let i = 0; i < data.length; i++) {
-  //     const bookingObj = {};
-
-  //     for (let booking of data[i].booking) {
-  //       bookingObj[booking.seat_id] = booking;
-  //     }
-  //     data[i].booking = bookingObj;
-  //   }
-
-  //   const obj = {};
-
-  //   for (let i = 0; i < data.length; i++) {
-  //     const screening = data[i];
-  //     obj[screening.id] = screening;
-  //   }
-
-  //   setScreenings(obj);
-  //   setSelectedTime(data[0].id);
-
-  //   setLoading(false);
-  // };
+  // useEffect(() => {
+  //   // console.log("TIME",selectedScreeningId)
+  //   updateQuery({
+  //     screening_id: selectedScreeningId,
+  //   })
+  // }, [selectedScreeningId])
 
   return (
     <Layout auto={false}>
@@ -397,7 +421,7 @@ const ShowPage = ({ movie, cinemas }) => {
                         updateQuery({
                           date: d.format("yyyy-MM-DD"),
                           date_index: index,
-                        })
+                        });
                       }}
                     >
                       <div
@@ -430,12 +454,12 @@ const ShowPage = ({ movie, cinemas }) => {
                   <select
                     id="time"
                     className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
-                    value={selectedTime}
+                    value={selectedScreeningId}
                     onChange={(e) => {
-                      console.log("SELECTEDDDD", e.target.value, e.target)
-                      setSelectedTime(e.target.value);
+                      console.log("SELECTEDDDD", e.target.value, e.target);
+                      setSelectedScreeningId(e.target.value);
                       updateQuery({
-                        "screening_id": e.target.value
+                        screening_id: e.target.value,
                       });
                     }}
                   >
@@ -445,7 +469,7 @@ const ShowPage = ({ movie, cinemas }) => {
                     {Object.entries(screenings).map(
                       ([id, screening], index) => {
                         return (
-                          <option key={screening.id} value={screening.id} >
+                          <option key={screening.id} value={screening.id}>
                             {moment(screening.start_time).format("LT")}
                           </option>
                         );
@@ -463,11 +487,10 @@ const ShowPage = ({ movie, cinemas }) => {
                   <select
                     className="bg-transparent text-[#455B77] mt-1 text-lg w-full"
                     value={selectedCinemaId}
-
                     onChange={() => {
                       setSelectedCinemaId(event.target.value);
                       updateQuery({
-                        "cinema_id": event.target.value
+                        cinema_id: event.target.value,
                       });
                     }}
                   >
@@ -488,7 +511,7 @@ const ShowPage = ({ movie, cinemas }) => {
             </div>
           </div>
         </div>
-
+        <AuthGuard>
         {loading ? (
           <div className="max-w-5xl mx-auto py-20 text-center text-xl">
             Loading
@@ -498,82 +521,109 @@ const ShowPage = ({ movie, cinemas }) => {
             {message}
           </div>
         ) : (
-          <div className="max-w-5xl px-5 md:px-0 mx-auto">
-            <div className="flex my-4 justify-end">
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-1">
-                {Object.values(colorMap).map((color, i) => {
-                  return (
-                    <div
-                      key={color.name}
-                      className="flex items-center mr-2 cursor-pointer select-none"
-                    >
-                      <Seat colors={color} className="w-8 h-6 mb-0 md:mb-0" />
-                      <p className="text-sm">{color.name}</p>
-                    </div>
-                  );
-                })}
+          
+            <div className="max-w-5xl px-5 md:px-0 mx-auto">
+              <div className="flex justify-center my-4">
+                {sessionExpiresAt && (
+                  <Countdown eventTime={sessionExpiresAt} interval={1000} />
+                )}
               </div>
-            </div>
-
-            <div className="bg-[#09192C] flex flex-col-reverse my-4 md:flex-row">
-              <div className="md:w-1/4 mt-3 md:mt-0">
-                <h3 className="text-2xl">Your Selected Seats</h3>
-                <p className="my-2">{selectedSeats.length} seats</p>
-                <div className="flex w-full flex-wrap">
-                  {selectedSeats.map((seat, i) => {
+              <div className="flex my-4 justify-end">
+                <div className="grid grid-cols-3 md:grid-cols-5 gap-1">
+                  {Object.values(colorMap).map((color, i) => {
                     return (
                       <div
-                        key={seat.id}
-                        className="text-[#AF9A54] bg-[#142F4D] px-2.5 py-0.5 mr-2 mb-2 rounded-md"
+                        key={color.name}
+                        className="flex items-center mr-2 cursor-pointer select-none"
                       >
-                        {String.fromCharCode(65 + seatsGrid.length - seat.row) +
-                          seat.number}
+                        <Seat colors={color} className="w-8 h-6 mb-0 md:mb-0" />
+                        <p className="text-sm">{color.name}</p>
                       </div>
                     );
                   })}
                 </div>
-                <div className="my-5">
-                  <button
-                    className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
-                    onClick={onReserve}
-                  >
-                    Reserve
-                  </button>
-                  <button
-                    className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
-                    onClick={onPurchase}
-                  >
-                    Purchase
-                  </button>
+              </div>
+
+              <div className="bg-[#09192C] flex flex-col-reverse my-4 md:flex-row">
+                <div className="md:w-1/4 mt-3 md:mt-0">
+                  <h3 className="text-2xl">Your Selected Seats</h3>
+                  <p className="my-2">{selectedSeats.length} seats</p>
+                  <div className="flex w-full flex-wrap">
+                    {selectedSeats.map((seat, i) => {
+                      return (
+                        <div
+                          key={seat.id}
+                          className="text-[#AF9A54] bg-[#142F4D] px-2.5 py-0.5 mr-2 mb-2 rounded-md"
+                        >
+                          {String.fromCharCode(
+                            65 + seatsGrid.length - seat.row
+                          ) + seat.number}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3">
+                    {Object.entries(seatsData.types).map(([type, val], i) => {
+                      return (
+                        <div key={type} className="flex justify-between">
+                          <div>{type}</div>
+                          <div>{val.count}</div>
+                          <div>{val.price}</div>
+                        </div>
+                      );
+                    })}
+                    <div className="h-px my-2 bg-slate-600"></div>
+                    <div className="flex justify-between">
+                      <div>{"Total"}</div>
+                      <div>{seatsData.total.price}</div>
+                    </div>
+                  </div>
+                  <div className="my-5">
+                    <button
+                      className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
+                      onClick={onReserve}
+                    >
+                      Reserve
+                    </button>
+                    <button
+                      className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
+                      onClick={onPurchase}
+                    >
+                      Purchase
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 flex flex-col justify-center items-center">
+                  {seatsGrid.map((row, rowIndex) => {
+                    return (
+                      <div className="flex flex-row" key={rowIndex}>
+                        <div className="flex w-10 h-10 justify-center items-center text-center">
+                          {String.fromCharCode(
+                            64 + seatsGrid.length - rowIndex
+                          )}
+                        </div>
+                        {row.map((cell, columnIndex) => {
+                          const colors = getColor(cell.status);
+                          return (
+                            <Seat
+                              onGridClick={() => {
+                                onGridClick(rowIndex, columnIndex);
+                              }}
+                              colors={colors}
+                              columnIndex={cell.number}
+                              key={cell.id}
+                            />
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="flex-1 flex flex-col justify-center items-center">
-                {seatsGrid.map((row, rowIndex) => {
-                  return (
-                    <div className="flex flex-row" key={rowIndex}>
-                      <div className="flex w-10 h-10 justify-center items-center text-center">
-                        {String.fromCharCode(64 + seatsGrid.length - rowIndex)}
-                      </div>
-                      {row.map((cell, columnIndex) => {
-                        const colors = getColor(cell.status);
-                        return (
-                          <Seat
-                            onGridClick={() => {
-                              onGridClick(rowIndex, columnIndex);
-                            }}
-                            colors={colors}
-                            columnIndex={cell.number}
-                            key={cell.id}
-                          />
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          </div>
         )}
+        </AuthGuard>
       </div>
     </Layout>
   );

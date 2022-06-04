@@ -15,7 +15,8 @@ type Auditorium struct {
 	Columns   int       `gorm:"column:columns" json:"columns"`
 	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 
-	Seats []Seat `gorm:"foreignKey:AuditoriumId" json:"seats"`
+	Seats         []Seat `gorm:"foreignKey:AuditoriumId" json:"seats"`
+	SelectedSeats []Seat `json:"selected_seats"`
 	// UpdatedAt    time.Time
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
