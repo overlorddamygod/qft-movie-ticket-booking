@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/overlorddamygod/qft-server/configs"
@@ -15,7 +16,11 @@ func NewRouter(lc fx.Lifecycle, config *configs.Config) *gin.Engine {
 
 	lc.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			PORT := "8080"
+			PORT := os.Getenv("PORT")
+
+			if PORT == "" {
+				PORT = "8080"
+			}
 
 			if err := router.Run(":" + PORT); err != nil {
 				return err

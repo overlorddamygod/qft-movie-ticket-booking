@@ -1,10 +1,20 @@
 module github.com/overlorddamygod/qft-server
 
+// +heroku goVersion go1.17
 go 1.17
 
 require (
 	github.com/joho/godotenv v1.4.0
 	go.uber.org/fx v1.17.1
+)
+
+require (
+	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-gonic/gin v1.8.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/uuid v1.3.0
+	gorm.io/driver/postgres v1.3.7
+	gorm.io/gorm v1.23.5
 )
 
 require (
@@ -30,23 +40,15 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
-	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
-)
-
-require (
-	github.com/gin-contrib/cors v1.3.1
-	github.com/gin-gonic/gin v1.8.0
-	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/google/uuid v1.3.0
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/dig v1.14.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
+	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect
-	gorm.io/driver/postgres v1.3.7
-	gorm.io/gorm v1.23.5
+	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/tools v0.1.5 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
