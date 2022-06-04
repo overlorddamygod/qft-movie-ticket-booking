@@ -24,6 +24,8 @@ func RegisterServer(config *configs.Config, router *gin.Engine, bookingC *bookin
 		{
 			transactionGroup.Use(middlewares.IsLoggedIn())
 			transactionGroup.POST("", transactionC.GetOrCreateTransaction)
+			transactionGroup.POST("pay", transactionC.Pay)
+			transactionGroup.POST("confirm", transactionC.ConfirmPayment)
 		}
 
 		screeningGroup := v1.Group("screening")

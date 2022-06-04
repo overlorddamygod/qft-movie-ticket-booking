@@ -87,7 +87,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		fmt.Println("TRANSACTIONS: ", transaction)
 
 		var booked models.Booking
-		result = tx.Joins("Transaction").First(&booked, `seat_id = ? AND auditorium_id = ? AND bookings.screening_id = ? AND "Transaction".expires_at > now()`, params.SeatID, params.AuditoriumID, params.ScreeningID)
+		result = tx.Joins("Transaction").First(&booked, `seat_id = ? AND auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR "Transaction".paid = true)`, params.SeatID, params.AuditoriumID, params.ScreeningID)
 		if result.Error != nil {
 			if result.Error != gorm.ErrRecordNotFound {
 				return result.Error
@@ -119,8 +119,11 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 			}
 			return nil
 		}
-
 		fmt.Println("ALREADY BOOKED")
+
+		if booked.Transaction.Paid {
+			return errors.New("seat is not available")
+		}
 
 		if booked.UserId == params.UserID {
 			fmt.Println("HERE")

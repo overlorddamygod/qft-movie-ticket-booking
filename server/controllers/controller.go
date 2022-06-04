@@ -28,3 +28,6 @@ func (BaseController) GetUserUUid(c *gin.Context) (uuid.UUID, error) {
 func (b BaseController) GetDb() *gorm.DB {
 	return b.db
 }
+func (b BaseController) GetConfig() *configs.Config {
+	return b.config
+}

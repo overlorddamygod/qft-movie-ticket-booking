@@ -5,11 +5,18 @@ import { supabase } from "../../utils/supabaseClient";
 import { Seat, colorMap, getColor } from "../../components/SeatsSetup";
 import Layout from "../../components/Layout";
 import Banner from "../../components/Banner";
+import Payment from "../../components/Payment";
 import moment from "moment";
 import Head from "next/head";
 import axiosClient from "../../utils/axiosClient";
 import Countdown from "../../components/Countdown";
 import AuthGuard from "../../components/AuthGuard";
+import { Elements, CardElement } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(
+  "pk_test_51L6teVLq5jVwlbtcevCzKQeNuzEE8dMzMubWk0vJegT64E9aDdPTohBlN4cyLLkHciEdMrykFcJPHz8m2HuFoVN900oBQxqx9v"
+);
 
 const ShowPage = ({ movie, cinemas }) => {
   const [seatsGrid, setSeatsGrid] = useState([[]]);
@@ -26,6 +33,8 @@ const ShowPage = ({ movie, cinemas }) => {
   const [screening, setScreening] = useState({});
   const [sessionExpiresAt, setSessionExpiresAt] = useState(null);
   const [fromQuery, setFromQuery] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
+  const [transaction, setTransaction] = useState({});
 
   useEffect(() => {
     const now = moment();
@@ -71,23 +80,26 @@ const ShowPage = ({ movie, cinemas }) => {
     };
   }, []);
 
-
   const updateQuery = (keyVal) => {
     for (let key in keyVal) {
       keyVal[key] = encodeURI(keyVal[key]);
     }
 
-    Router.push({
-      pathname: Router.pathname,
-      query: {
-        ...Router.query,
-        ...keyVal,
+    Router.push(
+      {
+        pathname: Router.pathname,
+        query: {
+          ...Router.query,
+          ...keyVal,
+        },
       },
-    }, undefined, { scroll: false });
+      undefined,
+      { scroll: false }
+    );
   };
 
   useEffect(() => {
-    console.log("LOLLLL", selectedScreeningId)
+    console.log("LOLLLL", selectedScreeningId);
     if (selectedScreeningId == "") return;
 
     setSelectedSeats([]);
@@ -109,7 +121,6 @@ const ShowPage = ({ movie, cinemas }) => {
       .fill(null)
       .map(() => Array(screening.auditorium.columns).fill(1));
 
-
     for (let seat of screening.auditorium.seats) {
       grid[seat.row - 1][seat.number - 1] = seat;
     }
@@ -117,6 +128,8 @@ const ShowPage = ({ movie, cinemas }) => {
 
     setSeatsGrid(grid);
   }, [screening]);
+
+  console.log(transaction)
 
   const getScreeningById = async (id, getSession = true) => {
     axiosClient
@@ -143,9 +156,13 @@ const ShowPage = ({ movie, cinemas }) => {
             )
             .then((res) => {
               console.log("EXPIRES", res.data.data.expires_at);
-              setSessionExpiresAt(
-                new Date(res.data.data.expires_at).getTime() / 1000
-              );
+              // setSessionExpiresAt(
+              //   new Date(res.data.data.expires_at).getTime() / 1000
+              // );
+              setTransaction({
+                id: res.data.data.id,
+                expires_at: new Date(res.data.data.expires_at).getTime() / 1000,
+              });
             })
             .catch((err) => {
               console.error(err);
@@ -270,17 +287,16 @@ const ShowPage = ({ movie, cinemas }) => {
     return () => {};
   }, [dates, selectedDate, selectedCinemaId]);
 
-
   const getScreenings = (movie_id, cinema_id, date, setScreeningId = true) => {
     setLoading(true);
     setMessage("");
     setScreenings({});
-    if ( !fromQuery ) {
-      setSelectedScreeningId("")
+    if (!fromQuery) {
+      setSelectedScreeningId("");
     }
 
     if (fromQuery) {
-      setFromQuery(false)
+      setFromQuery(false);
     }
 
     const url = `api/v1/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`;
@@ -296,8 +312,8 @@ const ShowPage = ({ movie, cinemas }) => {
       })
       .then((res) => {
         const { data } = res.data;
-        console.log("SAD", res.data.data,fromQuery);
-        console.log("FROM",fromQuery)
+        console.log("SAD", res.data.data, fromQuery);
+        console.log("FROM", fromQuery);
 
         if (data.length === 0) {
           // setScreenings([])
@@ -315,14 +331,14 @@ const ShowPage = ({ movie, cinemas }) => {
 
         setScreenings(res.data.data);
 
-          if (!fromQuery)  {
-            if (setScreeningId) {
-              setSelectedScreeningId(data[0].id);
-            }
-            if (fromQuery) {
-              setFromQuery(false)
-            }
+        if (!fromQuery) {
+          if (setScreeningId) {
+            setSelectedScreeningId(data[0].id);
           }
+          if (fromQuery) {
+            setFromQuery(false);
+          }
+        }
         // console.log("FROM",fromQuery)
         // if (setScreeningId) {
         //   console.log("SELECTED", data[0].id)
@@ -512,24 +528,23 @@ const ShowPage = ({ movie, cinemas }) => {
           </div>
         </div>
         <AuthGuard>
-        {loading ? (
-          <div className="max-w-5xl mx-auto py-20 text-center text-xl">
-            Loading
-          </div>
-        ) : message ? (
-          <div className="max-w-5xl mx-auto py-20 text-center text-xl">
-            {message}
-          </div>
-        ) : (
-          
+          {loading ? (
+            <div className="max-w-5xl mx-auto py-20 text-center text-xl">
+              Loading
+            </div>
+          ) : message ? (
+            <div className="max-w-5xl mx-auto py-20 text-center text-xl">
+              {message}
+            </div>
+          ) : (
             <div className="max-w-5xl px-5 md:px-0 mx-auto">
               <div className="flex justify-center my-4">
-                {sessionExpiresAt && (
-                  <Countdown eventTime={sessionExpiresAt} interval={1000} />
+                {transaction?.expires_at && (
+                  <Countdown eventTime={transaction.expires_at} interval={1000} />
                 )}
               </div>
               <div className="flex my-4 justify-end">
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-1">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
                   {Object.values(colorMap).map((color, i) => {
                     return (
                       <div
@@ -579,20 +594,26 @@ const ShowPage = ({ movie, cinemas }) => {
                       <div>{seatsData.total.price}</div>
                     </div>
                   </div>
-                  <div className="my-5">
-                    <button
-                      className="bg-[#C6AA55] hover:opacity-90 w-full mb-2 text-[#110A02] font-bold py-3 text-md rounded-md"
-                      onClick={onReserve}
-                    >
-                      Reserve
-                    </button>
-                    <button
-                      className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
-                      onClick={onPurchase}
-                    >
-                      Purchase
-                    </button>
-                  </div>
+                  <Elements stripe={stripePromise}>
+                    <div className="my-5">
+
+                      {!purchasing ? <button
+                        className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
+                        onClick={()=> {
+                          if (selectedSeats.length > 0)
+                          setPurchasing(true)
+                        }}
+                      >
+                        Purchase
+                      </button>:
+                      <Payment onCancel={()=> {
+                        setPurchasing(false)
+                      }} data={{
+                        transactionId: transaction.id,
+                        amount: seatsData.total.price,
+                      }}/>}
+                    </div>
+                  </Elements>
                 </div>
                 <div className="flex-1 flex flex-col justify-center items-center">
                   {seatsGrid.map((row, rowIndex) => {
@@ -622,7 +643,7 @@ const ShowPage = ({ movie, cinemas }) => {
                 </div>
               </div>
             </div>
-        )}
+          )}
         </AuthGuard>
       </div>
     </Layout>

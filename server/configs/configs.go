@@ -1,7 +1,6 @@
 package configs
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -10,8 +9,12 @@ import (
 
 type Config struct {
 	Database DBConfig
+	Stripe   StripeConfig
 }
 
+type StripeConfig struct {
+	SecretKey string
+}
 type DBConfig struct {
 	PostgresDSN string
 }
@@ -30,8 +33,10 @@ func NewConfig(envPath string) func() *Config {
 			Database: DBConfig{
 				PostgresDSN: getEnv("POSTGRES_DSN", "POSTGRES_DSN=user=postgres password=31221324sdffwefewsf host=db.sqwe.supabase.co port=5432 dbname=postgres"),
 			},
+			Stripe: StripeConfig{
+				SecretKey: getEnv("STRIPE_SECRET_KEY", "sk_test_51L6teVLq5jVwlbtcZgpvLz7ZTaMreTBHH5VxQwBIydc1OAlckzVSPdVCOoCBCZJ035sjXEnjVHJqGEW9H1l7Ls6700XqXw5B7r"),
+			},
 		}
-		fmt.Println(config)
 		return config
 	}
 }

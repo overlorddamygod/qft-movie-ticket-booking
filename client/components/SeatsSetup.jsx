@@ -32,6 +32,12 @@ export const colorMap = {
     text: "#E56E7F",
     backgroundColor: "#E56E7F",
   },
+  5: {
+    name: "My Seats",
+    border: "#7020a0", // Sold
+    text: "#7020a0",
+    backgroundColor: "#7020a0",
+  }
 };
 
 export const getColor = (num) => {

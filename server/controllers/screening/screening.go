@@ -60,7 +60,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 	// sc.db.Find()
 	var booked []models.Booking
 
-	result := sc.db.Joins("Transaction").Find(&booked, `auditorium_id = ? AND bookings.screening_id = ? AND "Transaction".expires_at > now()`, screening.AuditoriumId, screening.Id)
+	result := sc.db.Joins("Transaction").Find(&booked, `auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR paid = true)`, screening.AuditoriumId, screening.Id)
 
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -78,7 +78,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 		bookedMap[b.SeatId] = b
 	}
 
-	fmt.Println(bookedMap)
+	// fmt.Println(bookedMap)
 	// loop between screening.auditorium.seats
 
 	screening.Auditorium.SelectedSeats = make([]models.Seat, 0)
@@ -91,18 +91,30 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 			refSeat.Status = 0
 		}
 
+		if seat.Status == 3 || seat.Status == 4 {
+			continue
+		}
+
 		val, ok := bookedMap[seat.Id]
 		if ok {
-			fmt.Println(val, ok)
-			fmt.Println("SETTING", val.Status)
+			// fmt.Println(val, ok)
+			// fmt.Println("SETTING", val.Status)
 
 			// if val.UserId == user_id {
 			// 	refSeat.Status = val.Status
 			// } else {
 			// 	refSeat.Status = 3
 			// }
+			if val.Status == 3 || val.Status == 4 {
+				if val.UserId == user_uuid {
+					refSeat.Status = 5
+				} else {
+					refSeat.Status = val.Status
+				}
+				continue
+			}
 			if val.Status == 2 {
-				fmt.Println(val.UserId, user_id, val.UserId == user_uuid)
+				// fmt.Println(val.UserId, user_id, val.UserId == user_uuid)
 				if val.UserId == user_uuid {
 					refSeat.Status = val.Status
 					screening.Auditorium.SelectedSeats = append(screening.Auditorium.SelectedSeats, *refSeat)
@@ -111,13 +123,6 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 				}
 			}
 			// (&seat).Status = val.Status
-		}
-	}
-
-	for _, seat := range screening.Auditorium.Seats {
-		if seat.Id == 572 {
-
-			fmt.Println(seat)
 		}
 	}
 

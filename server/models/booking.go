@@ -21,3 +21,7 @@ type Booking struct {
 	// UpdatedAt    time.Time
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
+
+func (Booking) TableName() string {
+	return "bookings"
+}
