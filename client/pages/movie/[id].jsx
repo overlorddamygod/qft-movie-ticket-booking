@@ -220,58 +220,6 @@ const ShowPage = ({ movie, cinemas }) => {
       });
   };
 
-  const onPurchase = async () => {
-    const screening = screenings[selectedScreeningId];
-    if (!screening) {
-      return;
-    }
-    // console.log(selectedSeats);
-    const { data, err } = await supabase.from("bookings").insert(
-      selectedSeats.map((s) => {
-        return {
-          seat_id: s.id,
-          screening_id: screening.id,
-          auditorium_id: screening.auditorium.id,
-          status: 4,
-        };
-      })
-    );
-
-    setSelectedSeats([]);
-
-    if (err) {
-      console.log(err);
-      return;
-    }
-    alert("Purchase successful!");
-  };
-
-  const onReserve = async () => {
-    const screening = screenings[selectedScreeningId];
-    if (!screening) {
-      return;
-    }
-    const { data, err } = await supabase.from("bookings").insert(
-      selectedSeats.map((s) => {
-        return {
-          seat_id: s.id,
-          screening_id: screening.id,
-          auditorium_id: screening.auditorium.id,
-          status: 3,
-        };
-      })
-    );
-
-    setSelectedSeats([]);
-
-    if (err) {
-      console.log(err);
-      return;
-    }
-    console.log(data);
-    alert("Reserve successful!");
-  };
-
   useEffect(() => {
     console.log(selectedDate, dates, selectedCinemaId);
     if (dates.length == 0) return;
@@ -611,6 +559,8 @@ const ShowPage = ({ movie, cinemas }) => {
                       }} data={{
                         transactionId: transaction.id,
                         amount: seatsData.total.price,
+                      }} onSuccess={() => {
+                        getScreeningById(selectedScreeningId, false);
                       }}/>}
                     </div>
                   </Elements>

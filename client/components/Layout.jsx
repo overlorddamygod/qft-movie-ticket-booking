@@ -1,14 +1,50 @@
-import Link from "next/link";
+import { useEffect } from "react";
+import { supabase } from "../utils/supabaseClient";
+import Header from "./Header";
+import { setSession } from "../store/slices/sessionSlice";
+import { useDispatch } from "react-redux";
+import { Provider } from "react-redux";
+import { store } from "../store/store";
 
-export default function Layout({ auto=true, children }) {
+function Layout({ auto = true, children }) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    console.log(supabase.auth.session())
+    dispatch(setSession(supabase.auth.session()));
+    // console.log(supabase.auth.session())
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      dispatch(setSession(session));
+    });
+  }, []);
+
   return (
-    <div className={`${auto ? "max-w-xl mx-auto md:max-w-5xl px-5 md:px-0" : ""}`}>
-      <header className={`${!auto ? "max-w-xl mx-auto md:max-w-5xl px-5 md:px-0" : ""}`}>
-        <Link href="/">
-          <h1 className="text-5xl py-2 cursor-pointer">QFT</h1>
-        </Link>
+    <div
+      className={`${auto ? "max-w-xl mx-auto md:max-w-5xl px-5 md:px-0" : ""}`}
+    >
+      <header
+        className={`${
+          !auto
+            ? "max-w-xl mx-auto md:max-w-5xl px-5 md:px-0 flex justify-between items-center"
+            : "flex justify-between items-center"
+        }`}
+      >
+        <Header />
       </header>
       {children}
     </div>
   );
 }
+
+const LayoutWithProvider = ({children, auto}) => {
+  return (
+    <Provider store={store}>
+      <Layout auto={auto}>
+        {children}
+      </Layout>
+    </Provider>
+  )
+}
+
+export default LayoutWithProvider;

@@ -7,8 +7,9 @@ import {
 } from "@stripe/react-stripe-js";
 import axiosClient from "../utils/axiosClient";
 import { supabase } from "../utils/supabaseClient";
+import Spinner from "./Spinner";
 
-const Payment = ({ onCancel, data }) => {
+const Payment = ({ onCancel, data, onSuccess }) => {
   const [isPaymentLoading, setPaymentLoading] = useState(false);
   const stripe = useStripe();
   const elements = useElements();
@@ -54,7 +55,7 @@ const Payment = ({ onCancel, data }) => {
     } catch (error) {
       console.log(error);
     } finally {
-        setPaymentLoading(false);
+      setPaymentLoading(false);
     }
   };
 
@@ -73,6 +74,7 @@ const Payment = ({ onCancel, data }) => {
         }
       )
       .then((res) => {
+        onSuccess()
         alert("Payment Successful");
       })
       .catch((err) => {
@@ -93,20 +95,28 @@ const Payment = ({ onCancel, data }) => {
           },
         }}
       />
-      <button
-        className="bg-[#E56E7F] my-4 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
-        onClick={onPay}
-        disabled={isPaymentLoading}
-      >
-        Pay
-      </button>
-      <button
-        className="bg-gray-300 mb-4 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
-        disabled={isPaymentLoading}
-        onClick={onCancel}
-      >
-        Cancel
-      </button>
+      <div className="my-4">
+      {isPaymentLoading ? (
+        <Spinner />
+      ) : (
+        <>
+          <button
+            className="bg-[#E56E7F] mb-4 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
+            onClick={onPay}
+            disabled={isPaymentLoading}
+          >
+            Pay
+          </button>
+          <button
+            className="bg-gray-300 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
+            disabled={isPaymentLoading}
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        </>
+      )}
+      </div>
     </div>
   );
 };
