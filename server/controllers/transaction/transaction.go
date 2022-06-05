@@ -124,14 +124,12 @@ func (tc *TransactionController) Pay(c *gin.Context) {
 			}
 		}
 
-		fmt.Println("TRANSACTIONS: ", transaction)
+		if transaction.Paid {
+			return errors.New("transaction already paid")
+		}
 
 		if transaction.IsExpired() {
 			return errors.New("transaction expired")
-		}
-
-		if transaction.Paid {
-			return errors.New("transaction already paid")
 		}
 
 		var totalPrice int64
