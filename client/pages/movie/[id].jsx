@@ -109,6 +109,7 @@ const ShowPage = ({ movie, cinemas }) => {
   }, [selectedScreeningId]);
 
   useEffect(() => {
+    // setLoading(true)
     setPurchasing(false);
     if (Object.keys(screening).length == 0) return;
 
@@ -129,51 +130,35 @@ const ShowPage = ({ movie, cinemas }) => {
     setSelectedSeats(screening.auditorium.selected_seats);
 
     setSeatsGrid(grid);
+    // setLoading(false)
   }, [screening]);
 
-  console.log(transaction)
+  // console.log(transaction)
 
   const getScreeningById = async (id, getSession = true) => {
+    // setLoading(true)
     axiosClient
-      .get(`api/v1/screening/${id}`, {
+      .get(`api/v1/screening/${id}?transaction=1`, {
         headers: {
           Authorization: `${supabase.auth.currentSession?.access_token || " "}`,
         },
       })
       .then((res) => {
-        console.log(res);
-        setScreening(res.data.data);
+        const { data } = res.data
+
+        setScreening(data["screening"]);
         if (getSession) {
-          axiosClient
-            .post(
-              `api/v1/transaction`,
-              {
-                screening_id: +id,
-              },
-              {
-                headers: {
-                  Authorization: `${supabase.auth.currentSession.access_token}`,
-                },
-              }
-            )
-            .then((res) => {
-              console.log("EXPIRES", res.data.data.expires_at);
-              // setSessionExpiresAt(
-              //   new Date(res.data.data.expires_at).getTime() / 1000
-              // );
-              setTransaction({
-                id: res.data.data.id,
-                expires_at: new Date(res.data.data.expires_at).getTime() / 1000,
-              });
-            })
-            .catch((err) => {
-              console.error(err);
-            });
+          setTransaction({
+            id: data["transaction"].id,
+            expires_at: new Date(data["transaction"].expires_at).getTime() / 1000,
+          });
         }
       })
       .catch((err) => {
         console.error(err);
-      });
+      }).finally(() => {
+        // setLoading(false)
+        });
   };
 
   const onGridClick = async (rowIndex, columnIndex) => {
@@ -230,7 +215,7 @@ const ShowPage = ({ movie, cinemas }) => {
     console.log(selectedDate, dates, selectedCinemaId);
     if (dates.length == 0) return;
 
-    setSessionExpiresAt(null);
+    setTransaction(null);
     console.log("GETTING SCREENIGNS", dates, selectedDate, selectedCinemaId);
     // onDateSelected();
     getScreenings(

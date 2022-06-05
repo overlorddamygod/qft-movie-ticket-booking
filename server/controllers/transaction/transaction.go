@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
 	"github.com/overlorddamygod/qft-server/controllers"
 	"github.com/overlorddamygod/qft-server/models"
@@ -29,7 +30,7 @@ func NewTransactionController(config *configs.Config, db *gorm.DB, storage *stor
 }
 
 type GetOrCreateTransactionParams struct {
-	ScreeningID int `json:"screening_id" binding:"required"`
+	ScreeningId int `json:"screening_id" binding:"required"`
 }
 
 func (tc *TransactionController) GetOrCreateTransaction(c *gin.Context) {
@@ -52,15 +53,32 @@ func (tc *TransactionController) GetOrCreateTransaction(c *gin.Context) {
 		return
 	}
 
+	transaction, err := GetCreateTransaction(tc.GetDb(), userUuid, params.ScreeningId)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error":   true,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"error": false,
+		"data":  transaction,
+	})
+}
+
+func GetCreateTransaction(db *gorm.DB, userId uuid.UUID, screeningId int) (models.Transaction, error) {
 	var transaction models.Transaction
 
-	err = tc.GetDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.First(&transaction, "user_id = ? AND screening_id = ? AND expires_at > now()", userUuid, params.ScreeningID)
+	err := db.Transaction(func(tx *gorm.DB) error {
+		result := tx.First(&transaction, "user_id = ? AND screening_id = ? AND expires_at > now()", userId, screeningId)
 
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				transaction.UserId = userUuid
-				transaction.ScreeningId = params.ScreeningID
+				transaction.UserId = userId
+				transaction.ScreeningId = screeningId
 				transaction.CreatedAt = time.Now()
 				transaction.ExpiresAt = transaction.CreatedAt.Add(15 * time.Minute)
 
@@ -79,19 +97,7 @@ func (tc *TransactionController) GetOrCreateTransaction(c *gin.Context) {
 	}, &sql.TxOptions{
 		Isolation: sql.LevelSerializable,
 	})
-
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error":   true,
-			"message": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"error": false,
-		"data":  transaction,
-	})
+	return transaction, err
 }
 
 type PayParams struct {
@@ -140,7 +146,6 @@ func (tc *TransactionController) Pay(c *gin.Context) {
 		for _, booking := range transaction.Bookings {
 			totalPrice += booking.Seat.Price
 		}
-
 		params := &stripe.PaymentIntentParams{
 			Amount:   stripe.Int64(totalPrice * 100),
 			Currency: stripe.String(string(stripe.CurrencyNPR)),
@@ -157,7 +162,7 @@ func (tc *TransactionController) Pay(c *gin.Context) {
 			return err
 		}
 
-		if err := tx.Model(transaction).Updates(map[string]interface{}{
+		if err := tx.Model(transaction).Select("payment_intent_id", "total_price").Updates(map[string]interface{}{
 			"payment_intent_id": pi.ID,
 			"total_price":       totalPrice,
 		}).Error; err != nil {
@@ -204,6 +209,7 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 	}
 
 	stripe.Key = tc.BaseController.GetConfig().Stripe.SecretKey
+	lol := time.Now()
 
 	pi, err := paymentintent.Get(bodyParams.PaymentIntentID, nil)
 
@@ -224,6 +230,9 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 		return
 	}
 
+	fmt.Println("STRIPE GET", time.Since(lol).Seconds())
+	lol = time.Now()
+	time.Now()
 	err = tc.GetDb().Transaction(func(tx *gorm.DB) error {
 		var transaction models.Transaction
 		result := tx.First(&transaction, "id = ? AND payment_intent_id = ?", bodyParams.TransactionID, bodyParams.PaymentIntentID)
@@ -236,6 +245,10 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 			}
 		}
 
+		if transaction.Paid {
+			return errors.New("transaction already paid")
+		}
+
 		if err := tx.Model(transaction).Updates(map[string]interface{}{
 			"paid":       true,
 			"expires_at": time.Now(),
@@ -246,18 +259,23 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 		if err := tx.Model(&models.Booking{}).Where("transaction_id = ?", bodyParams.TransactionID).Update("status", 4).Error; err != nil {
 			return err
 		}
+
 		var newTransaction models.Transaction
-		if err := tc.GetDb().Preload("Bookings").Preload("Bookings.Seat").Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&newTransaction, "id = ?", bodyParams.TransactionID).Error; err != nil {
+		if err := tc.GetDb().Preload("Bookings", func(tx *gorm.DB) *gorm.DB {
+			return tx.Preload("Seat")
+		}).Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&newTransaction, "id = ?", transaction.Id).Error; err != nil {
 			return err
 		}
 
-		bytesBuff, fileName, err := newTransaction.BuildReceipt()
+		go func(transac models.Transaction) {
+			bytesBuff, fileName, err := transac.BuildReceipt()
 
-		if err != nil {
-			return errors.New("server error")
-		}
+			if err != nil {
+				fmt.Printf("ERROR BUILDING RECEIPT: %v", err)
+			}
 
-		tc.storage.UploadFile("transactions-receipts", fileName, &bytesBuff, "application/pdf")
+			tc.storage.UploadFile("transactions-receipts", fileName, &bytesBuff, "application/pdf")
+		}(newTransaction)
 
 		return nil
 	}, &sql.TxOptions{
@@ -269,6 +287,7 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 			"error":   true,
 			"message": err.Error(),
 		})
+		fmt.Println("END", time.Since(lol).Seconds())
 		return
 	}
 
@@ -294,7 +313,9 @@ func (tc *TransactionController) GetUserTransactions(c *gin.Context) {
 	}
 
 	var transactions []models.Transaction
-	if err := tc.GetDb().Preload("Bookings").Preload("Bookings.Seat").Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").Find(&transactions, "user_id = ? AND paid = true", userUUID).Error; err != nil {
+	if err := tc.GetDb().Preload("Bookings", func(t *gorm.DB) *gorm.DB {
+		return t.Preload("Seat")
+	}).Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").Find(&transactions, "user_id = ? AND paid = true", userUUID).Error; err != nil {
 		c.JSON(400, gin.H{
 			"error":   true,
 			"message": err.Error(),
@@ -334,7 +355,9 @@ func (tc *TransactionController) GetUserTransaction(c *gin.Context) {
 	}
 
 	var transaction models.Transaction
-	if err := tc.GetDb().Preload("Bookings").Preload("Bookings.Seat").Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&transaction, "id = ? AND user_id = ? AND paid = true", params.TransactionId, userUUID).Error; err != nil {
+	if err := tc.GetDb().Preload("Bookings", func(t *gorm.DB) *gorm.DB {
+		return t.Preload("Seat")
+	}).Preload("Bookings.Seat").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&transaction, "id = ? AND user_id = ? AND paid = true", params.TransactionId, userUUID).Error; err != nil {
 		c.JSON(400, gin.H{
 			"error":   true,
 			"message": err.Error(),

@@ -49,6 +49,8 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 	// userUUID, err := uuid.Parse(params.UserID)
 
+	bookedStatus := "booked"
+
 	err := bc.db.Transaction(func(tx *gorm.DB) error {
 		var seat models.Seat
 		result := tx.First(&seat, "id = ?", params.SeatID)
@@ -85,6 +87,14 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		}
 
 		fmt.Println("TRANSACTIONS: ", transaction)
+
+		if err := tx.First(&models.Screening{}, "id = ? AND start_time > now()", params.ScreeningID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("screening not found")
+			}
+
+			return errors.New("error getting screening")
+		}
 
 		var booked models.Booking
 		result = tx.Joins("Transaction").First(&booked, `seat_id = ? AND auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR "Transaction".paid = true)`, params.SeatID, params.AuditoriumID, params.ScreeningID)
@@ -136,6 +146,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 				fmt.Println("DELETING")
 				result := tx.Delete(&booked)
 
+				bookedStatus = "unbooked"
 				if result.Error != nil {
 					return result.Error
 				}
@@ -162,6 +173,6 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"error":   false,
-		"message": transaction,
+		"message": bookedStatus,
 	})
 }

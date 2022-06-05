@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
+	"github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/models"
 	"gorm.io/gorm"
 )
@@ -25,7 +26,7 @@ func NewScreeningController(config *configs.Config, db *gorm.DB) *ScreeningContr
 }
 
 type GetScreeningParams struct {
-	ScreeningId string `json:"screening_id" uri:"screening_id" binding:"required"`
+	ScreeningId int `json:"screening_id" uri:"screening_id" binding:"required"`
 }
 
 func (sc *ScreeningController) GetScreening(c *gin.Context) {
@@ -97,14 +98,6 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 
 		val, ok := bookedMap[seat.Id]
 		if ok {
-			// fmt.Println(val, ok)
-			// fmt.Println("SETTING", val.Status)
-
-			// if val.UserId == user_id {
-			// 	refSeat.Status = val.Status
-			// } else {
-			// 	refSeat.Status = 3
-			// }
 			if val.Status == 3 || val.Status == 4 {
 				if val.UserId == user_uuid {
 					refSeat.Status = 5
@@ -126,10 +119,38 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 		}
 	}
 
+	fetchTransaction := c.Query("transaction")
+
+	if fetchTransaction == "1" {
+
+		transaction, err := transaction.GetCreateTransaction(sc.db, user_uuid, params.ScreeningId)
+
+		if err != nil {
+			c.JSON(400, gin.H{
+				"error":   true,
+				"message": "Server error",
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"error":   false,
+			"message": "Success",
+			"data": gin.H{
+				"screening":   screening,
+				"transaction": transaction,
+			},
+		})
+		return
+	}
+
 	c.JSON(200, gin.H{
 		"error":   false,
 		"message": "Success",
-		"data":    screening,
+		"data": gin.H{
+			"screening":   screening,
+			"transaction": nil,
+		},
 	})
 }
 

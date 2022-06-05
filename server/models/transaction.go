@@ -22,8 +22,8 @@ type Transaction struct {
 	Paid            bool      `gorm:"column:paid" json:"paid"`
 	TotalPrice      int       `gorm:"column:total_price" json:"total_price"`
 
-	Bookings  []Booking `gorm:"foreignKey:TransactionId" json:"bookings"`
-	Screening Screening `gorm:"foreignKey:ScreeningId" json:"screening"`
+	Bookings  []Booking  `gorm:"foreignKey:TransactionId" json:"bookings"`
+	Screening *Screening `gorm:"foreignKey:ScreeningId" json:"screening"`
 	// UpdatedAt    time.Time
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
