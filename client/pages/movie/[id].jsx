@@ -13,6 +13,7 @@ import Countdown from "../../components/Countdown";
 import AuthGuard from "../../components/AuthGuard";
 import { Elements, CardElement } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import SeatTag from "../../components/SeatTag";
 
 const stripePromise = loadStripe(
   "pk_test_51L6teVLq5jVwlbtcevCzKQeNuzEE8dMzMubWk0vJegT64E9aDdPTohBlN4cyLLkHciEdMrykFcJPHz8m2HuFoVN900oBQxqx9v"
@@ -108,6 +109,7 @@ const ShowPage = ({ movie, cinemas }) => {
   }, [selectedScreeningId]);
 
   useEffect(() => {
+    setPurchasing(false);
     if (Object.keys(screening).length == 0) return;
 
     console.log("FOUND SCREENING FOR ID", selectedScreeningId);
@@ -175,6 +177,10 @@ const ShowPage = ({ movie, cinemas }) => {
   };
 
   const onGridClick = async (rowIndex, columnIndex) => {
+    if (purchasing) {
+      alert("Currently on payment page. Please finish or cancel payment before selecting seats.");
+      return
+    }
     const response = axiosClient
       .post(
         "api/v1/booking",
@@ -333,13 +339,6 @@ const ShowPage = ({ movie, cinemas }) => {
       }
     );
   }, [selectedSeats]);
-
-  // useEffect(() => {
-  //   // console.log("TIME",selectedScreeningId)
-  //   updateQuery({
-  //     screening_id: selectedScreeningId,
-  //   })
-  // }, [selectedScreeningId])
 
   return (
     <Layout auto={false}>
@@ -513,16 +512,7 @@ const ShowPage = ({ movie, cinemas }) => {
                   <p className="my-2">{selectedSeats.length} seats</p>
                   <div className="flex w-full flex-wrap">
                     {selectedSeats.map((seat, i) => {
-                      return (
-                        <div
-                          key={seat.id}
-                          className="text-[#AF9A54] bg-[#142F4D] px-2.5 py-0.5 mr-2 mb-2 rounded-md"
-                        >
-                          {String.fromCharCode(
-                            65 + seatsGrid.length - seat.row
-                          ) + seat.number}
-                        </div>
-                      );
+                      return <SeatTag key={seat.id} seat={seat} noRows={seatsGrid.length} />
                     })}
                   </div>
 
@@ -539,7 +529,7 @@ const ShowPage = ({ movie, cinemas }) => {
                     <div className="h-px my-2 bg-slate-600"></div>
                     <div className="flex justify-between">
                       <div>{"Total"}</div>
-                      <div>{seatsData.total.price}</div>
+                      <div>Nrs. {seatsData.total.price}</div>
                     </div>
                   </div>
                   <Elements stripe={stripePromise}>
@@ -621,45 +611,10 @@ export const getServerSideProps = async ({ params, res }) => {
   if (cinemaerr) {
     console.log(error);
   }
-  // console.log(cinemas)
-  //   const { data, error } = await supabase
-  //     .from("screenings")
-  //     .select(
-  //       `
-  //         id,
-  //         start_time,
-  //         movie:movie_id (id, name, release_date, trailer, banner, description, length ),
-  //         cinema:cinema_id (id, name, address),
-  //         booking:bookings!bookings_screening_id_fkey (id, seat_id, status),
-  //         auditorium:auditorium_id ( id, name, rows, columns, seat:seats!seats_auditorium_id_fkey (id, row, number, available) )
-  //       `
-  //     )
-  //     .eq("id", screeningId)
-  //     .single();
-
-  //   if (error) {
-  //     console.log(error);
-  //     res.statusCode = 404
-  //     res.end();
-  //     return {
-  //       error: "Not found"
-  //     }
-  //   }
-  //   // console.log(data)
-
-  //   const bookingObj = {};
-  //   data.booking = data.booking || []
-
-  //   for (let i = 0; i < data.booking.length; i++) {
-  //     bookingObj[data.booking[i].seat_id] = data.booking[i];
-  //   }
-
-  //   data.booking = bookingObj;
   return {
     props: {
       cinemas,
       movie,
-      // screening: data,
     },
   };
 };

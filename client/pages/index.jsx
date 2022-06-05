@@ -7,12 +7,11 @@ import { supabase } from "../utils/supabaseClient";
 import Link from "next/link";
 import Layout from "../components/Layout";
 import Head from "next/head";
-import LayoutWithProvider from "../components/Layout";
 
 export default function Home({ movies, nowshowing }) {
   console.log(movies, nowshowing)
   return (
-    <LayoutWithProvider>
+    <Layout>
       <Head>
         <title>QFT | Home</title>
       </Head>
@@ -20,7 +19,7 @@ export default function Home({ movies, nowshowing }) {
       <ShowCase header="Now Showing" movies={nowshowing}/>
       <ShowCase header="Movies" movies={movies}/>
       </>
-    </LayoutWithProvider>
+    </Layout>
   );
 }
 

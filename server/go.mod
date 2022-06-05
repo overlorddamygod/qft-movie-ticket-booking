@@ -13,8 +13,16 @@ require (
 	github.com/gin-gonic/gin v1.8.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
+	github.com/johnfercher/maroto v0.31.0
+	github.com/overlorddamygod/storage-go v0.5.9
 	gorm.io/driver/postgres v1.3.7
 	gorm.io/gorm v1.23.5
+)
+
+require (
+	github.com/boombuler/barcode v1.0.0 // indirect
+	github.com/jung-kurt/gofpdf v1.4.2 // indirect
+	github.com/ruudk/golang-pdf417 v0.0.0-20181029194003-1af4ab5afa58 // indirect
 )
 
 require (
@@ -39,7 +47,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
-	github.com/stripe/stripe-go/v72 v72.112.0 // indirect
+	github.com/stripe/stripe-go/v72 v72.112.0
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/dig v1.14.0 // indirect

@@ -7,12 +7,14 @@ import (
 )
 
 type Cinema struct {
-	Id            int       `gorm:"primary_key"`
-	Auditorium_id int       `gorm:"column:auditorium_id"`
-	CinemaId      uuid.UUID `gorm:"column:cinema_id"`
-	MovieId       uuid.UUID `gorm:"column:movie_id"`
-	CreatedAt     time.Time
-	StartTime     time.Time `gorm:"column:start_time"`
-	// UpdatedAt    time.Time
-	// DeletedAt    gorm.DeletedAt `gorm:"index"`
+	Id uuid.UUID `gorm:"primary_key" json:"id"`
+
+	Name    string `gorm:"column:name" json:"name"`
+	Address string `gorm:"column:address" json:"address"`
+
+	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+}
+
+func (Cinema) TableName() string {
+	return "cinemas"
 }

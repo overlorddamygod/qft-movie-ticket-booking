@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -22,4 +23,8 @@ type Seat struct {
 
 func (Seat) TableName() string {
 	return "seats"
+}
+
+func (s Seat) Info(noRows int) string {
+	return fmt.Sprintf("%c %d", 65+noRows-s.Row, s.Number)
 }

@@ -3,14 +3,12 @@ import { supabase } from "../utils/supabaseClient";
 import Header from "./Header";
 import { setSession } from "../store/slices/sessionSlice";
 import { useDispatch } from "react-redux";
-import { Provider } from "react-redux";
-import { store } from "../store/store";
 
 function Layout({ auto = true, children }) {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log(supabase.auth.session())
+    // console.log(supabase.auth.session())
     dispatch(setSession(supabase.auth.session()));
     // console.log(supabase.auth.session())
 
@@ -37,14 +35,4 @@ function Layout({ auto = true, children }) {
   );
 }
 
-const LayoutWithProvider = ({children, auto}) => {
-  return (
-    <Provider store={store}>
-      <Layout auto={auto}>
-        {children}
-      </Layout>
-    </Provider>
-  )
-}
-
-export default LayoutWithProvider;
+export default Layout;

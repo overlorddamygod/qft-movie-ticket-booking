@@ -8,8 +8,10 @@ import {
 import axiosClient from "../utils/axiosClient";
 import { supabase } from "../utils/supabaseClient";
 import Spinner from "./Spinner";
+import Router, { useRouter } from "next/router";
 
 const Payment = ({ onCancel, data, onSuccess }) => {
+  const router = useRouter()
   const [isPaymentLoading, setPaymentLoading] = useState(false);
   const stripe = useStripe();
   const elements = useElements();
@@ -41,7 +43,6 @@ const Payment = ({ onCancel, data, onSuccess }) => {
           },
         },
       });
-      setPaymentLoading(false);
       if (paymentResult.error) {
         alert(paymentResult.error.message);
         console.log(paymentResult.error.message);
@@ -54,7 +55,6 @@ const Payment = ({ onCancel, data, onSuccess }) => {
       }
     } catch (error) {
       console.log(error);
-    } finally {
       setPaymentLoading(false);
     }
   };
@@ -75,10 +75,22 @@ const Payment = ({ onCancel, data, onSuccess }) => {
       )
       .then((res) => {
         onSuccess()
+        onCancel()
+        setPaymentLoading(false);
         alert("Payment Successful");
+        console.log(res.data.data)
+        // Router.replace(`profile/tickets/${res.data.data.transaction_id}`);
+        Router.replace({
+          pathname: `profile/tickets/[id]`,
+          query: {
+            id: res.data.data.transaction_id,
+          },
+        })
+        // router.replace
       })
       .catch((err) => {
         console.log(err);
+        setPaymentLoading(false);
       });
   };
 

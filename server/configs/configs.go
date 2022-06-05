@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Database DBConfig
 	Stripe   StripeConfig
+	Storage  StorageConfig
 }
 
 type StripeConfig struct {
@@ -17,6 +18,11 @@ type StripeConfig struct {
 }
 type DBConfig struct {
 	PostgresDSN string
+}
+
+type StorageConfig struct {
+	Endpoint  string
+	SecretKey string
 }
 
 var MainConfig *Config
@@ -32,6 +38,10 @@ func NewConfig(envPath string) func() *Config {
 		config := &Config{
 			Database: DBConfig{
 				PostgresDSN: getEnv("POSTGRES_DSN", "POSTGRES_DSN=user=postgres password=31221324sdffwefewsf host=db.sqwe.supabase.co port=5432 dbname=postgres"),
+			},
+			Storage: StorageConfig{
+				Endpoint:  getEnv("STORAGE_ENDPOINT", "https://storage.supabase.co"),
+				SecretKey: getEnv("STORAGE_SECRET_KEY", "31221324sdffwefewsf"),
 			},
 			Stripe: StripeConfig{
 				SecretKey: getEnv("STRIPE_SECRET_KEY", "sk_test_51L6teVLq5jVwlbtcZgpvLz7ZTaMreTBHH5VxQwBIydc1OAlckzVSPdVCOoCBCZJ035sjXEnjVHJqGEW9H1l7Ls6700XqXw5B7r"),

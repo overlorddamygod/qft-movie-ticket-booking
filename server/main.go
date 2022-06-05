@@ -10,6 +10,7 @@ import (
 	"github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/db"
 	"github.com/overlorddamygod/qft-server/server"
+	"github.com/overlorddamygod/qft-server/storage"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 )
@@ -19,6 +20,7 @@ func main() {
 		fx.Provide(
 			configs.NewConfig(".env"),
 			db.NewDB,
+			storage.NewStorage,
 			booking.NewBookingController,
 			screening.NewScreeningController,
 			transaction.NewTransactionController,

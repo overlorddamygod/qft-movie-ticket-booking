@@ -10,6 +10,7 @@ import (
 	"github.com/overlorddamygod/qft-server/configs"
 	"github.com/overlorddamygod/qft-server/controllers"
 	"github.com/overlorddamygod/qft-server/models"
+	storage_go "github.com/overlorddamygod/storage-go"
 	stripe "github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/paymentintent"
 	"gorm.io/gorm"
@@ -17,11 +18,13 @@ import (
 
 type TransactionController struct {
 	controllers.BaseController
+	storage *storage_go.Client
 }
 
-func NewTransactionController(config *configs.Config, db *gorm.DB) *TransactionController {
+func NewTransactionController(config *configs.Config, db *gorm.DB, storage *storage_go.Client) *TransactionController {
 	return &TransactionController{
 		BaseController: *controllers.NewBaseController(config, db),
+		storage:        storage,
 	}
 }
 
@@ -154,7 +157,10 @@ func (tc *TransactionController) Pay(c *gin.Context) {
 			return err
 		}
 
-		if err := tx.Model(transaction).Update("payment_intent_id", pi.ID).Error; err != nil {
+		if err := tx.Model(transaction).Updates(map[string]interface{}{
+			"payment_intent_id": pi.ID,
+			"total_price":       totalPrice,
+		}).Error; err != nil {
 			return err
 		}
 
@@ -240,6 +246,18 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 		if err := tx.Model(&models.Booking{}).Where("transaction_id = ?", bodyParams.TransactionID).Update("status", 4).Error; err != nil {
 			return err
 		}
+		var newTransaction models.Transaction
+		if err := tc.GetDb().Preload("Bookings").Preload("Bookings.Seat").Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&newTransaction, "id = ?", bodyParams.TransactionID).Error; err != nil {
+			return err
+		}
+
+		bytesBuff, fileName, err := newTransaction.BuildReceipt()
+
+		if err != nil {
+			return errors.New("server error")
+		}
+
+		tc.storage.UploadFile("transactions-receipts", fileName, &bytesBuff, "application/pdf")
 
 		return nil
 	}, &sql.TxOptions{
@@ -258,7 +276,74 @@ func (tc *TransactionController) ConfirmPayment(c *gin.Context) {
 		"error": false,
 		"data": gin.H{
 			"payment_intent_id": pi.ID,
+			"transaction_id":    bodyParams.TransactionID,
 			"success":           true,
 		},
+	})
+}
+
+func (tc *TransactionController) GetUserTransactions(c *gin.Context) {
+	userUUID, err := tc.GetUserUUid(c)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error":   true,
+			"message": "Invalid user",
+		})
+		return
+	}
+
+	var transactions []models.Transaction
+	if err := tc.GetDb().Preload("Bookings").Preload("Bookings.Seat").Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").Find(&transactions, "user_id = ? AND paid = true", userUUID).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error":   true,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"error": false,
+		"data":  transactions,
+	})
+}
+
+type GetUserTransactionParams struct {
+	TransactionId string `json:"transaction_id" uri:"transaction_id" binding:"required"`
+}
+
+func (tc *TransactionController) GetUserTransaction(c *gin.Context) {
+	userUUID, err := tc.GetUserUUid(c)
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error":   true,
+			"message": "Invalid user",
+		})
+		return
+	}
+
+	var params GetUserTransactionParams
+
+	if err := c.BindUri(&params); err != nil {
+		c.JSON(400, gin.H{
+			"error":   true,
+			"message": "Invalid params",
+		})
+		return
+	}
+
+	var transaction models.Transaction
+	if err := tc.GetDb().Preload("Bookings").Preload("Bookings.Seat").Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&transaction, "id = ? AND user_id = ? AND paid = true", params.TransactionId, userUUID).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error":   true,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"error": false,
+		"data":  transaction,
 	})
 }
