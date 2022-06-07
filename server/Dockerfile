@@ -3,6 +3,7 @@ FROM golang:alpine AS builder
 
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
+    GOFLAGS=-mod=vendor \
     GOOS=linux \
     GOARCH=amd64
 
