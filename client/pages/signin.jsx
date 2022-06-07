@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { supabase } from "../utils/supabaseClient";
 import Layout from "../components/Layout";
 import Spinner from "../components/Spinner";
+import { supabase } from "../utils/supabaseClient";
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);

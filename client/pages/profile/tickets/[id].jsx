@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/router';
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { getSession } from "../../../store/slices/sessionSlice";
-import Layout from "../../../components/Layout";
-import axios from "../../../utils/axiosClient";
-import { useRouter } from 'next/router'
 import BookedTicket from "../../../components/BookedTicket";
+import Layout from "../../../components/Layout";
 import Spinner from "../../../components/Spinner";
+import { getSession } from "../../../store/slices/sessionSlice";
+import axios from "../../../utils/axiosClient";
 
 const Bookings = () => {
   const router = useRouter()

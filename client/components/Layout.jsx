@@ -1,8 +1,8 @@
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setSession } from "../store/slices/sessionSlice";
 import { supabase } from "../utils/supabaseClient";
 import Header from "./Header";
-import { setSession } from "../store/slices/sessionSlice";
-import { useDispatch } from "react-redux";
 
 function Layout({ auto = true, children }) {
   const dispatch = useDispatch();

@@ -92,7 +92,7 @@ func GetCreateTransaction(db *gorm.DB, userId uuid.UUID, screeningId int) (model
 			}
 		}
 
-		fmt.Println("TRANSACTIONS: ", transaction)
+		// fmt.Println("TRANSACTIONS: ", transaction)
 		return nil
 	}, &sql.TxOptions{
 		Isolation: sql.LevelSerializable,
@@ -175,7 +175,7 @@ func (tc *TransactionController) Pay(c *gin.Context) {
 	})
 
 	if err != nil {
-		// paymentintent.Cancel(pi.ID, nil)
+		paymentintent.Cancel(pi.ID, nil)
 		c.JSON(400, gin.H{
 			"error":   true,
 			"message": err.Error(),

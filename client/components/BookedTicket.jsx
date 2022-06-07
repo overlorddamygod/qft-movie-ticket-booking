@@ -1,5 +1,5 @@
-import React from "react";
 import moment from "moment";
+import React from "react";
 import SeatTag from "./SeatTag";
 
 const BookedTicket = ({ booking }) => {
@@ -13,7 +13,9 @@ const BookedTicket = ({ booking }) => {
         <div className="text-[#455B77]">
           <div>
             Show Time:{" "}
-            {moment(booking.screening.start_time).format(" h:mm a, MMMM Do YYYY")}
+            {moment(booking.screening.start_time).format(
+              " h:mm a, MMMM Do YYYY"
+            )}
           </div>
           <div>
             {booking.screening.cinema.name} {booking.screening.auditorium.name}
@@ -48,9 +50,8 @@ const BookedTicket = ({ booking }) => {
   );
 };
 
-
 const getReceiptUrl = (id) => {
-    return `${process.env.NEXT_PUBLIC_STORAGE_URL}tran_${id}.pdf`
-  }
+  return `${process.env.NEXT_PUBLIC_STORAGE_URL}tran_${id}.pdf`;
+};
 
 export default BookedTicket;

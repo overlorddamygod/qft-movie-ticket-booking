@@ -9,7 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
+	TransactionController "github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/models"
+
 	"gorm.io/gorm"
 )
 
@@ -36,7 +38,6 @@ type CreateBookingParams struct {
 func (bc *BookingController) CreateBooking(c *gin.Context) {
 	var params CreateBookingParams
 	if err := c.Bind(&params); err != nil {
-		fmt.Println(err)
 		c.JSON(400, gin.H{
 			"error":   true,
 			"message": "Invalid params",
@@ -44,7 +45,6 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(params)
 	var transaction models.Transaction
 
 	// userUUID, err := uuid.Parse(params.UserID)
@@ -86,6 +86,12 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 			}
 		}
 
+		transaction, err := TransactionController.GetCreateTransaction(tx, params.UserID, params.ScreeningID)
+
+		if err != nil {
+			return err
+		}
+
 		fmt.Println("TRANSACTIONS: ", transaction)
 
 		if err := tx.First(&models.Screening{}, "id = ? AND start_time > now()", params.ScreeningID).Error; err != nil {
@@ -123,8 +129,6 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 				Status:        2,
 			}
 			if err := tx.Create(&booking).Error; err != nil {
-				fmt.Println("SAD", booking)
-				fmt.Println(err)
 				return err
 			}
 			return nil
@@ -136,14 +140,11 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		}
 
 		if booked.UserId == params.UserID {
-			fmt.Println("HERE")
 			if booked.Transaction.IsExpired() {
 				return errors.New("transaction is expired")
 			}
-			fmt.Println("SAD")
 
 			if booked.Status == 2 {
-				fmt.Println("DELETING")
 				result := tx.Delete(&booked)
 
 				bookedStatus = "unbooked"

@@ -1,16 +1,13 @@
+import Head from "next/head";
 import React, { useState } from "react";
 import Layout from "../../../components/Layout";
 import { supabase } from "../../../utils/supabaseClient";
-import MovieCard from "../../../components/MovieCard";
-import Head from "next/head";
 
 const AddScreening = ({ cinemas, movies }) => {
   const [cinemaId, setCinemaId] = useState("none");
   const [audiId, setAudiId] = useState("none");
   const [time, setTime] = useState();
   const [selectedMovie, setSelectedMovie] = useState(null);
-
-  console.log(time)
 
   const onAdd = async (e) => {
     e.preventDefault()
@@ -27,14 +24,14 @@ const AddScreening = ({ cinemas, movies }) => {
     }
 
     const {data, err} = await supabase.from("screenings").insert(screening)
-    console.log(screening)
+    // console.log(screening)
 
     if (err) {
-        console.error(err);
+        // console.error(err);
         alert("Something went wrong")
         return
     }
-    console.log(data, err)
+    // console.log(data, err)
     alert("Added Screening Successfully.")
   }
 

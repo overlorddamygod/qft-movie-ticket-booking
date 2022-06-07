@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { getSession } from '../store/slices/sessionSlice';
 

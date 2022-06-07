@@ -1,25 +1,27 @@
-import Link from "next/link";
-import { useState, useEffect, useMemo } from "react";
-import Router, { useRouter } from "next/router";
-import { supabase } from "../../utils/supabaseClient";
-import { Seat, colorMap, getColor } from "../../components/SeatsSetup";
-import Layout from "../../components/Layout";
-import Banner from "../../components/Banner";
-import Payment from "../../components/Payment";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import moment from "moment";
 import Head from "next/head";
-import axiosClient from "../../utils/axiosClient";
-import Countdown from "../../components/Countdown";
+import Link from "next/link";
+import Router from "next/router";
+import { useEffect, useMemo, useState } from "react";
 import AuthGuard from "../../components/AuthGuard";
-import { Elements, CardElement } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import Banner from "../../components/Banner";
+import Countdown from "../../components/Countdown";
+import Layout from "../../components/Layout";
+import Payment from "../../components/Payment";
+import { colorMap, getColor, Seat } from "../../components/SeatsSetup";
 import SeatTag from "../../components/SeatTag";
+import Spinner from "../../components/Spinner";
+import axiosClient from "../../utils/axiosClient";
+import { supabase } from "../../utils/supabaseClient";
 
 const stripePromise = loadStripe(
-  "pk_test_51L6teVLq5jVwlbtcevCzKQeNuzEE8dMzMubWk0vJegT64E9aDdPTohBlN4cyLLkHciEdMrykFcJPHz8m2HuFoVN900oBQxqx9v"
+  process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY
 );
 
 const ShowPage = ({ movie, cinemas }) => {
+  const [gridLoading, setGridLoading] = useState(false);
   const [seatsGrid, setSeatsGrid] = useState([[]]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [dates, setDates] = useState([]);
@@ -52,9 +54,9 @@ const ShowPage = ({ movie, cinemas }) => {
     console.log(supabase.auth);
 
     const { query } = Router;
-    console.log(query);
+
     const queries = ["date", "date_index", "cinema_id", "screening_id"];
-    console.log(queries.every((q) => Object.keys(query).includes(q)));
+
     if (queries.every((q) => Object.keys(query).includes(q))) {
       console.log("FOUND QUERY");
       setSelectedDate(+query.date_index);
@@ -95,7 +97,7 @@ const ShowPage = ({ movie, cinemas }) => {
         },
       },
       undefined,
-      { scroll: false }
+      { scroll: false, shallow: true }
     );
   };
 
@@ -105,7 +107,7 @@ const ShowPage = ({ movie, cinemas }) => {
 
     setSelectedSeats([]);
     console.log("FETCHING SCREENING FOR ID", selectedScreeningId);
-    getScreeningById(selectedScreeningId);
+    getScreeningById(selectedScreeningId, true);
   }, [selectedScreeningId]);
 
   useEffect(() => {
@@ -138,34 +140,41 @@ const ShowPage = ({ movie, cinemas }) => {
   const getScreeningById = async (id, getSession = true) => {
     // setLoading(true)
     axiosClient
-      .get(`api/v1/screening/${id}?transaction=1`, {
+      .get(`api/v1/screening/${id}?transaction=${getSession ? "1" : "0"}`, {
         headers: {
           Authorization: `${supabase.auth.currentSession?.access_token || " "}`,
         },
       })
       .then((res) => {
-        const { data } = res.data
+        const { data } = res.data;
 
         setScreening(data["screening"]);
-        if (getSession) {
-          setTransaction({
-            id: data["transaction"].id,
-            expires_at: new Date(data["transaction"].expires_at).getTime() / 1000,
-          });
-        }
+        if (data["transaction"]?.expires_at)
+        setTransaction({
+          id: data["transaction"].id,
+          expires_at: new Date(data["transaction"].expires_at).getTime() / 1000,
+        });
       })
       .catch((err) => {
-        console.error(err);
-      }).finally(() => {
-        // setLoading(false)
-        });
+        if (err?.response?.data?.message) {
+          setMessage(err.response.data.message);
+        } else {
+          setMessage("Something went wrong. Please try again.");
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const onGridClick = async (rowIndex, columnIndex) => {
     if (purchasing) {
-      alert("Currently on payment page. Please finish or cancel payment before selecting seats.");
-      return
+      alert(
+        "Currently on payment page. Please finish or cancel payment before selecting seats."
+      );
+      return;
     }
+    setGridLoading(true);
     const response = axiosClient
       .post(
         "api/v1/booking",
@@ -182,8 +191,6 @@ const ShowPage = ({ movie, cinemas }) => {
         }
       )
       .then((res) => {
-        console.log(res);
-
         const status = seatsGrid[rowIndex][columnIndex].status;
         if (status === 0 || status == 3 || status == 4) {
           return;
@@ -207,7 +214,14 @@ const ShowPage = ({ movie, cinemas }) => {
         getScreeningById(selectedScreeningId, false);
       })
       .catch((err) => {
-        console.log(err);
+        if (err?.response?.data?.message) {
+          alert(err.response.data.message);
+        } else {
+          alert("Something went wrong. Please try again.");
+        }
+      })
+      .finally(() => {
+        setGridLoading(false);
       });
   };
 
@@ -251,8 +265,8 @@ const ShowPage = ({ movie, cinemas }) => {
       })
       .then((res) => {
         const { data } = res.data;
-        console.log("SAD", res.data.data, fromQuery);
-        console.log("FROM", fromQuery);
+        // console.log("SAD", res.data.data, fromQuery);
+        // console.log("FROM", fromQuery);
 
         if (data.length === 0) {
           // setScreenings([])
@@ -278,21 +292,17 @@ const ShowPage = ({ movie, cinemas }) => {
             setFromQuery(false);
           }
         }
-        // console.log("FROM",fromQuery)
-        // if (setScreeningId) {
-        //   console.log("SELECTED", data[0].id)
-        //   setSelectedScreeningId(data[0].id);
-        //   // updateQuery({
-        //   //   screening_id: data[0].id,
-        //   // })
-        // }
-        setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
-        setMessage("Error");
+        if (err?.response?.data?.message) {
+          setMessage(err.response.data.message);
+        } else {
+          setMessage("Something went wrong. Please try again.");
+        }
         setLoading(false);
       });
+    // .finally(() => {
+    // });
   };
 
   const seatsData = useMemo(() => {
@@ -462,7 +472,7 @@ const ShowPage = ({ movie, cinemas }) => {
         <AuthGuard>
           {loading ? (
             <div className="max-w-5xl mx-auto py-20 text-center text-xl">
-              Loading
+              <Spinner />
             </div>
           ) : message ? (
             <div className="max-w-5xl mx-auto py-20 text-center text-xl">
@@ -472,16 +482,19 @@ const ShowPage = ({ movie, cinemas }) => {
             <div className="max-w-5xl px-5 md:px-0 mx-auto">
               <div className="flex justify-center my-4">
                 {transaction?.expires_at && (
-                  <Countdown eventTime={transaction.expires_at} interval={1000} />
+                  <Countdown
+                    eventTime={transaction.expires_at}
+                    interval={1000}
+                  />
                 )}
               </div>
               <div className="flex my-4 justify-end">
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-0.5">
                   {Object.values(colorMap).map((color, i) => {
                     return (
                       <div
                         key={color.name}
-                        className="flex items-center mr-2 cursor-pointer select-none"
+                        className="flex items-center cursor-pointer select-none px-1 w-fit"
                       >
                         <Seat colors={color} className="w-8 h-6 mb-0 md:mb-0" />
                         <p className="text-sm">{color.name}</p>
@@ -494,10 +507,21 @@ const ShowPage = ({ movie, cinemas }) => {
               <div className="bg-[#09192C] flex flex-col-reverse my-4 md:flex-row">
                 <div className="md:w-1/4 mt-3 md:mt-0">
                   <h3 className="text-2xl">Your Selected Seats</h3>
-                  <p className="my-2">{selectedSeats.length} seats</p>
+                  <div className="flex justify-between items-center my-3">
+                    <p>{selectedSeats.length} seats</p>
+                    <div className="text-red-500 text-sm">
+                      * Max Bookings: 8
+                    </div>
+                  </div>
                   <div className="flex w-full flex-wrap">
                     {selectedSeats.map((seat, i) => {
-                      return <SeatTag key={seat.id} seat={seat} noRows={seatsGrid.length} />
+                      return (
+                        <SeatTag
+                          key={seat.id}
+                          seat={seat}
+                          noRows={seatsGrid.length}
+                        />
+                      );
                     })}
                   </div>
 
@@ -519,52 +543,64 @@ const ShowPage = ({ movie, cinemas }) => {
                   </div>
                   <Elements stripe={stripePromise}>
                     <div className="my-5">
-
-                      {!purchasing ? <button
-                        className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
-                        onClick={()=> {
-                          if (selectedSeats.length > 0)
-                          setPurchasing(true)
-                        }}
-                      >
-                        Purchase
-                      </button>:
-                      <Payment onCancel={()=> {
-                        setPurchasing(false)
-                      }} data={{
-                        transactionId: transaction.id,
-                        amount: seatsData.total.price,
-                      }} onSuccess={() => {
-                        getScreeningById(selectedScreeningId, false);
-                      }}/>}
+                      {!purchasing ? (
+                        <button
+                          className="bg-[#E56E7F]  hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md"
+                          onClick={() => {
+                            if (selectedSeats.length > 0) setPurchasing(true);
+                          }}
+                        >
+                          Purchase
+                        </button>
+                      ) : (
+                        <Payment
+                          onCancel={() => {
+                            setPurchasing(false);
+                          }}
+                          data={{
+                            transactionId: transaction.id,
+                            amount: seatsData.total.price,
+                          }}
+                          onSuccess={() => {
+                            // getScreeningById(selectedScreeningId, false);
+                          }}
+                        />
+                      )}
                     </div>
                   </Elements>
                 </div>
-                <div className="flex-1 flex flex-col justify-center items-center">
-                  {seatsGrid.map((row, rowIndex) => {
-                    return (
-                      <div className="flex flex-row" key={rowIndex}>
-                        <div className="flex w-10 h-10 justify-center items-center text-center">
-                          {String.fromCharCode(
-                            64 + seatsGrid.length - rowIndex
-                          )}
+                <div className="flex-1 flex flex-col justify-center items-center min-h-[25rem]">
+                  {!gridLoading ? (
+                    seatsGrid.map((row, rowIndex) => {
+                      return (
+                        <div className="flex flex-row" key={rowIndex}>
+                          <div className="flex w-10 h-10 justify-center items-center text-center">
+                            {String.fromCharCode(
+                              64 + seatsGrid.length - rowIndex
+                            )}
+                          </div>
+                          {row.map((cell, columnIndex) => {
+                            const colors = getColor(cell.status);
+                            return (
+                              <Seat
+                                onGridClick={() => {
+                                  onGridClick(rowIndex, columnIndex);
+                                }}
+                                colors={colors}
+                                columnIndex={cell.number}
+                                key={cell.id}
+                              />
+                            );
+                          })}
                         </div>
-                        {row.map((cell, columnIndex) => {
-                          const colors = getColor(cell.status);
-                          return (
-                            <Seat
-                              onGridClick={() => {
-                                onGridClick(rowIndex, columnIndex);
-                              }}
-                              colors={colors}
-                              columnIndex={cell.number}
-                              key={cell.id}
-                            />
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <>
+                      <Spinner />
+                      <div className="mt-1">Processing...</div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

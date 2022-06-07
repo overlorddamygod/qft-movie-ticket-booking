@@ -1,16 +1,10 @@
-// import Head from 'next/head'
-// import Image from 'next/image'
-// import styles from '../styles/Home.module.css'
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { supabase } from "../utils/supabaseClient";
-import Link from "next/link";
-import Layout from "../components/Layout";
 import Head from "next/head";
+import Layout from "../components/Layout";
 import MovieCard from "../components/MovieCard";
+import { supabase } from "../utils/supabaseClient";
 
 export default function Home({ movies, nowshowing }) {
-  console.log(movies, nowshowing)
+  // console.log(movies, nowshowing)
   return (
     <Layout>
       <Head>

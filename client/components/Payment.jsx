@@ -1,17 +1,13 @@
-import { useState, useEffect } from "react";
 import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements,
+  CardElement, useElements, useStripe
 } from "@stripe/react-stripe-js";
+import Router from "next/router";
+import { useState } from "react";
 import axiosClient from "../utils/axiosClient";
 import { supabase } from "../utils/supabaseClient";
 import Spinner from "./Spinner";
-import Router, { useRouter } from "next/router";
 
 const Payment = ({ onCancel, data, onSuccess }) => {
-  const router = useRouter()
   const [isPaymentLoading, setPaymentLoading] = useState(false);
   const stripe = useStripe();
   const elements = useElements();
@@ -45,16 +41,21 @@ const Payment = ({ onCancel, data, onSuccess }) => {
       });
       if (paymentResult.error) {
         alert(paymentResult.error.message);
-        console.log(paymentResult.error.message);
+        setPaymentLoading(false);
+        // console.log(paymentResult.error.message);
       } else {
         if (paymentResult.paymentIntent.status === "succeeded") {
           // alert("Success!");
           // console.log(paymentResult);
           confirmPayment(paymentResult.paymentIntent.id);
+        } else {
+          alert("Something went wrong. Please try again.");
+          setPaymentLoading(false);
         }
       }
     } catch (error) {
-      console.log(error);
+      // console.log(error);
+      alert("Something went wrong. Please try again.");
       setPaymentLoading(false);
     }
   };
@@ -78,25 +79,22 @@ const Payment = ({ onCancel, data, onSuccess }) => {
         onCancel()
         setPaymentLoading(false);
         alert("Payment Successful");
-        console.log(res.data.data)
-        // Router.replace(`profile/tickets/${res.data.data.transaction_id}`);
-        Router.replace({
-          pathname: `profile/tickets/[id]`,
+        Router.push({
+          pathname: `../profile/tickets/[id]`,
           query: {
             id: res.data.data.transaction_id,
           },
         })
-        // router.replace
       })
       .catch((err) => {
-        console.log(err);
+        alert("Something went wrong. Please try again.");
         setPaymentLoading(false);
       });
   };
 
   return (
     <div>
-      <h1>Payment</h1>
+      <h1 className="text-xl mb-2">Payment</h1>
       <CardElement
         className="card"
         options={{
@@ -113,7 +111,7 @@ const Payment = ({ onCancel, data, onSuccess }) => {
       ) : (
         <>
           <button
-            className="bg-[#E56E7F] mb-4 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
+            className="bg-[#E56E7F] mb-3 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
             onClick={onPay}
             disabled={isPaymentLoading}
           >

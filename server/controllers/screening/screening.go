@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
-	"github.com/overlorddamygod/qft-server/controllers/transaction"
+	TransactionController "github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/models"
 	"gorm.io/gorm"
 )
@@ -57,6 +57,8 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 		})
 		return
 	}
+
+	screening.Bookable = screening.IsBookable()
 
 	// sc.db.Find()
 	var booked []models.Booking
@@ -123,7 +125,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 
 	if fetchTransaction == "1" {
 
-		transaction, err := transaction.GetCreateTransaction(sc.db, user_uuid, params.ScreeningId)
+		transaction, err := TransactionController.GetCreateTransaction(sc.db, user_uuid, params.ScreeningId)
 
 		if err != nil {
 			c.JSON(400, gin.H{
@@ -191,7 +193,7 @@ func (sc *ScreeningController) GetScreenings(c *gin.Context) {
 
 	var screenings []models.Screening
 
-	err := sc.db.Joins("Auditorium").Where("movie_id = ? AND screenings.cinema_id = ? AND start_time < ? AND start_time > ?", params.MovieId, params.CinemaId, endDate, startDate).Find(&screenings).Error
+	err := sc.db.Joins("Auditorium").Where("movie_id = ? AND screenings.cinema_id = ? AND start_time < ? AND start_time > ? AND start_time > now()", params.MovieId, params.CinemaId, endDate, startDate).Find(&screenings).Error
 
 	if err != nil {
 		c.JSON(400, gin.H{

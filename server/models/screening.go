@@ -17,6 +17,13 @@ type Screening struct {
 	Auditorium *Auditorium `gorm:"foreignKey:AuditoriumId" json:"auditorium"`
 	Cinema     *Cinema     `gorm:"foreignKey:CinemaId" json:"cinema"`
 	Movie      *Movie      `gorm:"foreignKey:MovieId" json:"movie"`
+
+	Bookable bool `gorm:"-" json:"bookable"`
+
 	// UpdatedAt    time.Time
 	// DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+
+func (s *Screening) IsBookable() bool {
+	return s.StartTime.After(time.Now()) // && time.Until(s.StartTime) > time.Hour
 }
