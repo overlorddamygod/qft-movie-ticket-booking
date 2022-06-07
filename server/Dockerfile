@@ -15,7 +15,7 @@ COPY . .
 RUN go build -o main main.go
 
 # STEP 2 build a small image
-FROM scratch
+FROM alpine
 
 COPY --from=builder /app/main /app/main
 
