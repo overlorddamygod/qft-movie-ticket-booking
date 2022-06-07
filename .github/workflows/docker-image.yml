@@ -1,0 +1,36 @@
+name: Build and deploy a container image to Azure Web Apps
+
+on:
+  push:
+    branches:
+    - azure-actions
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@main
+
+    - name: Authenticate using a Service Principal
+      uses: azure/actions/login@v1
+      with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - uses: azure/container-actions/docker-login@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push the image tagged with the git commit hash
+      run: |
+        docker build ./server -t ${{ secrets.DOCKER_USERNAME }}/qft:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/qft:${{ github.sha }}
+
+    - name: Update image tag on the Azure Web App
+      uses: azure/webapps-container-deploy@v1
+      with:
+        app-name: 'qft'
+        images: '${{ secrets.DOCKER_USERNAME }}/qft:${{ github.sha }}'
