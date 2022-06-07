@@ -30,7 +30,8 @@ jobs:
       with:
         push: true
         tags: ${{ secrets.AzureAppService_ContainerUsername_783b5b6308e84a6b965fdd640d047585 }}/qft:${{ github.sha }}
-        file: ./Dockerfile
+        file: ./server/Dockerfile
+        context: ./server
 
   deploy:
     runs-on: ubuntu-latest
