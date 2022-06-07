@@ -3,7 +3,6 @@ FROM golang:alpine AS builder
 
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
-    GOFLAGS=-mod=vendor \
     GOOS=linux \
     GOARCH=amd64
 
@@ -11,12 +10,10 @@ RUN apk update && apk add --no-cache git
 
 WORKDIR /app
 
-COPY go.mod .
-
 COPY . .
 
 # RUN go mod download
-RUN go mod download
+RUN go mod tidy
 
 RUN go build -o main main.go
 
