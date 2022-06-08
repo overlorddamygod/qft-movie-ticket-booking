@@ -1,10 +1,10 @@
-import React from "react";
 import Link from "next/link";
+import React from "react";
 import { useSelector } from "react-redux";
 import { getSession } from "../store/slices/sessionSlice";
 import { supabase } from "../utils/supabaseClient";
 
-const Header = () => {
+const Header = ({ showNavs = true }) => {
   const session = useSelector(getSession);
 
   const signOut = () => {
@@ -16,7 +16,7 @@ const Header = () => {
       <Link href="/">
         <a className="text-5xl py-2 cursor-pointer">QFT</a>
       </Link>
-      {session?.user ? (
+      {showNavs && (session?.user ? (
         <div className="flex justify-end items-center">
           {/* <div className="text-2xl">{session.user.name}</div> */}
           <Link href="/profile/tickets">
@@ -42,7 +42,7 @@ const Header = () => {
             Sign In
           </div>
         </Link>
-      )}
+      ))}
     </>
   );
 };

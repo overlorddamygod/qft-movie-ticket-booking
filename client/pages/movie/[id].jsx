@@ -138,7 +138,9 @@ const ShowPage = ({ movie, cinemas }) => {
   // console.log(transaction)
 
   const getScreeningById = async (id, getSession = true) => {
-    // setLoading(true)
+    if (getSession) {
+      setLoading(true)
+    }
     axiosClient
       .get(`api/v1/screening/${id}?transaction=${getSession ? "1" : "0"}`, {
         headers: {

@@ -6,12 +6,12 @@ import Layout from "../components/Layout";
 import { supabase } from "../utils/supabaseClient";
 
 export default function Auth() {
-  const handleSignin = async (email, password) => {
+  const handleSignUp = async (email, password) => {
     try {
-      const { error } = await supabase.auth.signIn({ email, password });
+      const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
       Router.push("/");
-      return "Successfully signed in";
+      return "Successfully signed up and logged in!";
     } catch (error) {
       return error.error_description || error.message;
     }
@@ -20,22 +20,21 @@ export default function Auth() {
   return (
     <Layout showNavs={false}>
       <Head>
-        <title>QFT | Sign In</title>
+        <title>QFT | Sign Up</title>
       </Head>
-      <div className="row flex flex-col flex-center justify-center items-center h-64">
+      <div className="row flex flex-center justify-center items-center h-64 flex-col">
         <EmailPasswordForm
           onSubmit={(email, password) => {
-            return handleSignin(email, password);
+            return handleSignUp(email, password);
           }}
-          title={"Sign in to your account"}
-          buttonTitle={"Sign In"}
+          title={"Create an account"}
+          buttonTitle={"Sign Up"}
         />
-
         <div className="my-5">
-          {"Don't have an account? "}
-          <Link href="/signup">
+          {"Already have an account? "}
+          <Link href="/signin">
             <button className="shadow ml-2 bg-emerald-500 hover:bg-emerald-400 focus:shadow-outline focus:outline-none text-white font-bold py-0.5 px-1 rounded">
-              Sign Up
+              Sign In
             </button>
           </Link>
         </div>

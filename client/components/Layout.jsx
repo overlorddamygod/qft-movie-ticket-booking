@@ -4,7 +4,7 @@ import { setSession } from "../store/slices/sessionSlice";
 import { supabase } from "../utils/supabaseClient";
 import Header from "./Header";
 
-function Layout({ auto = true, children }) {
+function Layout({ auto = true, showNavs = true, children }) {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -28,7 +28,7 @@ function Layout({ auto = true, children }) {
             : "flex justify-between items-center"
         }`}
       >
-        <Header />
+        <Header showNavs={showNavs}/>
       </header>
       {children}
     </div>

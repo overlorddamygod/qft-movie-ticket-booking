@@ -5,8 +5,12 @@ import Layout from "../../../components/Layout";
 import Spinner from "../../../components/Spinner";
 import { getSession } from "../../../store/slices/sessionSlice";
 import axios from "../../../utils/axiosClient";
+import Head from "next/head";
+import ProtectedRoute from "../../../components/ProtectedRoute";
+import { useRouter } from "next/router";
 
 const Bookings = () => {
+  const router = useRouter();
   const session = useSelector(getSession);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +35,11 @@ const Bookings = () => {
     }
   };
   return (
+      <ProtectedRoute router={router}>
     <Layout>
+      <Head>
+        <title>QFT | My Tickets</title>
+      </Head>
       <div className="text-4xl mb-1">My Tickets</div>
       <div className="py-2">
       {loading ? (
@@ -45,6 +53,7 @@ const Bookings = () => {
       )}
       </div>
     </Layout>
+    </ProtectedRoute>
   );
 };
 
