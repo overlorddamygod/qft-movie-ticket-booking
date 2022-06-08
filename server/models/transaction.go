@@ -78,8 +78,13 @@ func (t *Transaction) BuildReceipt() (bytes.Buffer, string, error) {
 					Size:  15,
 					Style: consts.Bold,
 				})
+				m.Text(booking.Seat.Type, props.Text{
+					Top:   10,
+					Size:  15,
+					Style: consts.BoldItalic,
+				})
 				m.QrCode(fmt.Sprintf("tran_%s_%s", t.Id, seatName), props.Rect{
-					Top:     14,
+					Top:     18,
 					Center:  false,
 					Percent: 80,
 				})

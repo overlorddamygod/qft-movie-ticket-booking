@@ -1,6 +1,7 @@
 import Head from "next/head";
 import React, { useState } from "react";
 import Layout from "../../../components/Layout";
+import SelectInput from "../../../components/SelectInput";
 import { supabase } from "../../../utils/supabaseClient";
 
 const AddScreening = ({ cinemas, movies }) => {
@@ -44,12 +45,11 @@ const AddScreening = ({ cinemas, movies }) => {
       <form onSubmit={onAdd}>
         <div>
           <label>Cinema</label>
-          <select
+          <SelectInput
             onChange={(e) => {
                 setCinemaId(e.target.value);
               setAudiId("none");
             }}
-            className="text-black"
             value={cinemaId}
           >
             <option key={"none"} value={"none"}>
@@ -60,15 +60,14 @@ const AddScreening = ({ cinemas, movies }) => {
                 {cinemas[cinema].name}
               </option>
             ))}
-          </select>
+          </SelectInput>
         </div>
         <div>
           <label>Auditorium</label>
-          <select
+          <SelectInput
             onChange={(e) => {
               setAudiId(e.target.value);
             }}
-            className="text-black"
             value={audiId}
           >
             <option key={"none"} value={"none"}>
@@ -80,7 +79,7 @@ const AddScreening = ({ cinemas, movies }) => {
                   {aud.name}
                 </option>
               ))}
-          </select>
+          </SelectInput>
         </div>
         <div>
           <label>Time</label>

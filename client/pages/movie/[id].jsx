@@ -10,15 +10,19 @@ import Banner from "../../components/Banner";
 import Countdown from "../../components/Countdown";
 import Layout from "../../components/Layout";
 import Payment from "../../components/Payment";
-import { colorMap, getColor, Seat } from "../../components/SeatsSetup";
+import { SeatRow } from "../../components/Seats";
+// import { colorMap, Seat } from "../../components/SeatsSetup";
 import SeatTag from "../../components/SeatTag";
 import Spinner from "../../components/Spinner";
 import axiosClient from "../../utils/axiosClient";
 import { supabase } from "../../utils/supabaseClient";
+import { Seat } from "../../components/Seats";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY
-);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
+
+const getColor = (cell) => {
+  return colorMap[cell.status] || colorMap[0];
+}
 
 const ShowPage = ({ movie, cinemas }) => {
   const [gridLoading, setGridLoading] = useState(false);
@@ -139,7 +143,7 @@ const ShowPage = ({ movie, cinemas }) => {
 
   const getScreeningById = async (id, getSession = true) => {
     if (getSession) {
-      setLoading(true)
+      setLoading(true);
     }
     axiosClient
       .get(`api/v1/screening/${id}?transaction=${getSession ? "1" : "0"}`, {
@@ -152,10 +156,11 @@ const ShowPage = ({ movie, cinemas }) => {
 
         setScreening(data["screening"]);
         if (data["transaction"]?.expires_at)
-        setTransaction({
-          id: data["transaction"].id,
-          expires_at: new Date(data["transaction"].expires_at).getTime() / 1000,
-        });
+          setTransaction({
+            id: data["transaction"].id,
+            expires_at:
+              new Date(data["transaction"].expires_at).getTime() / 1000,
+          });
       })
       .catch((err) => {
         if (err?.response?.data?.message) {
@@ -176,13 +181,25 @@ const ShowPage = ({ movie, cinemas }) => {
       );
       return;
     }
+    if (gridLoading) {
+      return;
+    }
+    const seat = seatsGrid[rowIndex][columnIndex]
+    if (seat.status === 0 || seat.status == 3 || seat.status == 4) {
+      alert("Seat unavailable.");
+      return;
+    }
+    if (seat.status === 5 ) {
+      alert("Seat is already purchased by you.");
+      return
+    }
     setGridLoading(true);
     const response = axiosClient
       .post(
         "api/v1/booking",
         {
           user_id: supabase.auth.currentUser.id,
-          seat_id: seatsGrid[rowIndex][columnIndex].id,
+          seat_id: seat.id,
           screening_id: screening.id,
           auditorium_id: screening.auditorium.id,
         },
@@ -193,10 +210,10 @@ const ShowPage = ({ movie, cinemas }) => {
         }
       )
       .then((res) => {
-        const status = seatsGrid[rowIndex][columnIndex].status;
-        if (status === 0 || status == 3 || status == 4) {
-          return;
-        }
+        const status = seat.status;
+        // if (status === 0 || status == 3 || status == 4) {
+        //   return;
+        // }
 
         const grid = [...seatsGrid];
         grid[rowIndex][columnIndex].status =
@@ -218,6 +235,8 @@ const ShowPage = ({ movie, cinemas }) => {
       .catch((err) => {
         if (err?.response?.data?.message) {
           alert(err.response.data.message);
+          getScreeningById(selectedScreeningId, false);
+
         } else {
           alert("Something went wrong. Please try again.");
         }
@@ -573,30 +592,27 @@ const ShowPage = ({ movie, cinemas }) => {
                 </div>
                 <div className="flex-1 flex flex-col justify-center items-center min-h-[25rem]">
                   {!gridLoading ? (
-                    seatsGrid.map((row, rowIndex) => {
+                    <>
+                    {seatsGrid.map((row, rowIndex) => {
                       return (
-                        <div className="flex flex-row" key={rowIndex}>
-                          <div className="flex w-10 h-10 justify-center items-center text-center">
-                            {String.fromCharCode(
+                        <SeatRow
+                          key={rowIndex}
+                          row={row}
+                          rowIndex={rowIndex}
+                          onSeatClick={(_rowIndex, _colIndex) => {
+                            onGridClick(_rowIndex, _colIndex);
+                          }}
+                          colorFunc={getColor}
+                          rowNameFunc={(rowIndex) => {
+                            return String.fromCharCode(
                               64 + seatsGrid.length - rowIndex
-                            )}
-                          </div>
-                          {row.map((cell, columnIndex) => {
-                            const colors = getColor(cell.status);
-                            return (
-                              <Seat
-                                onGridClick={() => {
-                                  onGridClick(rowIndex, columnIndex);
-                                }}
-                                colors={colors}
-                                columnIndex={cell.number}
-                                key={cell.id}
-                              />
                             );
-                          })}
-                        </div>
+                          }}
+                        ></SeatRow>
                       );
-                    })
+                    })}
+                    <div className="my-5 text-4xl md:text-5xl">Screen</div>
+                    </>
                   ) : (
                     <>
                       <Spinner />
@@ -640,4 +656,45 @@ export const getServerSideProps = async ({ params, res }) => {
       movie,
     },
   };
+};
+
+
+
+export const colorMap = {
+  0: {
+    name: "Unavailable",
+    border: "#313131", // Unavailable
+    text: "#313131",
+    backgroundColor: "#313131",
+  },
+  1: {
+    name: "Available",
+    border: "#163869", // Available
+    text: "white",
+    backgroundColor: "",
+  },
+  2: {
+    name: "Selected",
+    border: "#F1B778", // Selected
+    text: "white",
+    backgroundColor: "",
+  },
+  3: {
+    name: "Reserved",
+    border: "#BA55D3", // Reserved
+    text: "#BA55D3",
+    backgroundColor: "#BA55D3",
+  },
+  4: {
+    name: "Sold",
+    border: "#E56E7F", // Sold
+    text: "#E56E7F",
+    backgroundColor: "#E56E7F",
+  },
+  5: {
+    name: "My Seats",
+    border: "#7020a0", // My seats
+    text: "#7020a0",
+    backgroundColor: "#7020a0",
+  }
 };

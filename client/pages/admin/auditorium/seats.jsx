@@ -1,8 +1,8 @@
 import React from 'react'
 import Layout from '../../../components/Layout'
-import SeatsSetup from '../../../components/SeatsSetup'
 import { supabase } from '../../../utils/supabaseClient'
 import Head from 'next/head'
+import SeatLayoutDesign from '../../../components/SeatLayoutDesign'
 
 const Seats = ({cinemas}) => {
   return (
@@ -10,7 +10,7 @@ const Seats = ({cinemas}) => {
             <Head>
         <title>QFT Admin | Configure Seats</title>
       </Head>
-        <SeatsSetup cinemas={cinemas}/>
+        <SeatLayoutDesign cinemas={cinemas}/>
     </Layout>
   )
 }
