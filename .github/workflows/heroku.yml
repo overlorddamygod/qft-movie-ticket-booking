@@ -3,7 +3,7 @@ name: Deploy Server
 on:
   push:
     branches:
-      - main
+      - supabase-azure
 
 jobs:
   build:
