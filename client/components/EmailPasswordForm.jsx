@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Spinner from "./Spinner";
 
 const EmailPasswordForm = ({ onSubmit, title, buttonTitle }) => {
@@ -12,7 +12,7 @@ const EmailPasswordForm = ({ onSubmit, title, buttonTitle }) => {
       onSubmit={async (e) => {
         e.preventDefault();
         setLoading(true);
-        const message = await onSubmit(email, password)
+        const message = await onSubmit(email, password);
         setMessage(message);
         setLoading(false);
       }}

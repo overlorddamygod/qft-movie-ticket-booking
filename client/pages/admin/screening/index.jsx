@@ -1,8 +1,8 @@
 import Head from "next/head";
-import React, { useState } from "react";
+import { useState } from "react";
 import Layout from "../../../components/Layout";
 import SelectInput from "../../../components/SelectInput";
-import { supabase } from "../../../utils/supabaseClient";
+import axiosClient from "../../../utils/axiosClient";
 
 const AddScreening = ({ cinemas, movies }) => {
   const [cinemaId, setCinemaId] = useState("none");
@@ -11,30 +11,33 @@ const AddScreening = ({ cinemas, movies }) => {
   const [selectedMovie, setSelectedMovie] = useState(null);
 
   const onAdd = async (e) => {
-    e.preventDefault()
-    if (cinemaId === "none" || audiId === "none" || time === null || selectedMovie === null) {
-      alert("Please fill all the fields")
-      return
+    e.preventDefault();
+    if (
+      cinemaId === "none" ||
+      audiId === "none" ||
+      time === null ||
+      selectedMovie === null
+    ) {
+      alert("Please fill all the fields");
+      return;
     }
 
     const screening = {
-        cinema_id: cinemaId,
-        auditorium_id: audiId,
-        start_time: new Date(time).toISOString(),
-        movie_id: selectedMovie
-    }
+      cinema_id: cinemaId,
+      auditorium_id: +audiId,
+      start_time: new Date(time).toISOString(),
+      movie_id: selectedMovie,
+    };
 
-    const {data, err} = await supabase.from("screenings").insert(screening)
-    // console.log(screening)
+    try {
+      const res = await axiosClient.post("/api/v1/screening", screening);
 
-    if (err) {
-        // console.error(err);
-        alert("Something went wrong")
-        return
+      alert("Added Screening Successfully.");
+    } catch (error) {
+      console.log(error);
+      alert("Error adding screening. Something went wrong.");
     }
-    // console.log(data, err)
-    alert("Added Screening Successfully.")
-  }
+  };
 
   return (
     <Layout>
@@ -47,7 +50,7 @@ const AddScreening = ({ cinemas, movies }) => {
           <label>Cinema</label>
           <SelectInput
             onChange={(e) => {
-                setCinemaId(e.target.value);
+              setCinemaId(e.target.value);
               setAudiId("none");
             }}
             value={cinemaId}
@@ -138,40 +141,41 @@ const AddScreening = ({ cinemas, movies }) => {
         </button>
       </form>
     </Layout>
-  )
-}
+  );
+};
 
 export default AddScreening;
 
 export const getServerSideProps = async () => {
-  const { data: cinemas, error } = await supabase.from("cinemas").select(`
-        id,
-        name,
-        address,
-        auditoriums!auditorium_cinema_id_fkey (id, cinema_id, name)
-      `);
+  try {
+    const cinemasRes = await axiosClient.get("/api/v1/cinema?auditorium=1");
 
-  if (error) {
-    console.log(error);
+    const { data: cinemas } = cinemasRes.data;
+
+    const moviesRes = await axiosClient.get("/api/v1/movie");
+
+    const { data: movies } = moviesRes.data;
+
+    const cinemasObj = {};
+    cinemas.forEach((cinema) => {
+      cinemasObj[cinema.id] = cinema;
+    });
+
+    return {
+      props: {
+        cinemas: cinemasObj,
+        movies,
+        error: false,
+      },
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      props: {
+        cinemas: {},
+        movies: [],
+        error: true,
+      },
+    };
   }
-
-  // turn to key value pair
-  const cinemasObj = {};
-  cinemas.forEach((cinema) => {
-    cinemasObj[cinema.id] = cinema;
-  });
-
-  const { data: movies, err } = await supabase.from("movies").select("*");
-
-  if (err) {
-    console.log(error);
-  }
-
-  // }
-  return {
-    props: {
-      cinemas: cinemasObj,
-      movies: movies,
-    },
-  };
 };

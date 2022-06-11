@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -67,26 +66,8 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 			return errors.New("seat is not available")
 		}
 
-		result = tx.First(&transaction, "user_id = ? AND screening_id = ? AND expires_at > now()", params.UserID, params.ScreeningID)
-
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				transaction.UserId = params.UserID
-				transaction.ScreeningId = params.ScreeningID
-				transaction.CreatedAt = time.Now()
-				transaction.ExpiresAt = transaction.CreatedAt.Add(30 * time.Minute)
-
-				result = tx.Create(&transaction)
-
-				if result.Error != nil {
-					return result.Error
-				}
-			} else {
-				return result.Error
-			}
-		}
-
-		transaction, err := TransactionController.GetCreateTransaction(tx, params.UserID, params.ScreeningID)
+		t, err := TransactionController.GetCreateTransaction(tx, params.UserID, params.ScreeningID)
+		transaction = t
 
 		if err != nil {
 			return err

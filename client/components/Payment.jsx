@@ -1,10 +1,8 @@
-import {
-  CardElement, useElements, useStripe
-} from "@stripe/react-stripe-js";
+import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import Router from "next/router";
 import { useState } from "react";
 import axiosClient from "../utils/axiosClient";
-import { supabase } from "../utils/supabaseClient";
+import client from "../utils/goAuth";
 import Spinner from "./Spinner";
 
 const Payment = ({ onCancel, data, onSuccess }) => {
@@ -23,7 +21,7 @@ const Payment = ({ onCancel, data, onSuccess }) => {
         },
         {
           headers: {
-            Authorization: `${supabase.auth.currentSession.access_token}`,
+            Authorization: `${client.accessToken}`,
           },
         }
       );
@@ -70,13 +68,13 @@ const Payment = ({ onCancel, data, onSuccess }) => {
         },
         {
           headers: {
-            Authorization: `${supabase.auth.currentSession.access_token}`,
+            Authorization: `${client.accessToken}`,
           },
         }
       )
       .then((res) => {
-        onSuccess()
-        onCancel()
+        onSuccess();
+        onCancel();
         setPaymentLoading(false);
         alert("Payment Successful");
         Router.push({
@@ -84,7 +82,7 @@ const Payment = ({ onCancel, data, onSuccess }) => {
           query: {
             id: res.data.data.transaction_id,
           },
-        })
+        });
       })
       .catch((err) => {
         alert("Something went wrong. Please try again.");
@@ -106,26 +104,26 @@ const Payment = ({ onCancel, data, onSuccess }) => {
         }}
       />
       <div className="my-4">
-      {isPaymentLoading ? (
-        <Spinner />
-      ) : (
-        <>
-          <button
-            className="bg-[#E56E7F] mb-3 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
-            onClick={onPay}
-            disabled={isPaymentLoading}
-          >
-            Pay
-          </button>
-          <button
-            className="bg-gray-300 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
-            disabled={isPaymentLoading}
-            onClick={onCancel}
-          >
-            Cancel
-          </button>
-        </>
-      )}
+        {isPaymentLoading ? (
+          <Spinner />
+        ) : (
+          <>
+            <button
+              className="bg-[#E56E7F] mb-3 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
+              onClick={onPay}
+              disabled={isPaymentLoading}
+            >
+              Pay
+            </button>
+            <button
+              className="bg-gray-300 hover:opacity-90 w-full text-[#110A02] font-bold py-3 text-md rounded-md disabled:cursor-not-allowed"
+              disabled={isPaymentLoading}
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -12,17 +12,17 @@ import Layout from "../../components/Layout";
 import Payment from "../../components/Payment";
 import { SeatRow } from "../../components/Seats";
 // import { colorMap, Seat } from "../../components/SeatsSetup";
+import { Seat } from "../../components/Seats";
 import SeatTag from "../../components/SeatTag";
 import Spinner from "../../components/Spinner";
 import axiosClient from "../../utils/axiosClient";
-import { supabase } from "../../utils/supabaseClient";
-import { Seat } from "../../components/Seats";
+import client from "../../utils/goAuth";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
 const getColor = (cell) => {
   return colorMap[cell.status] || colorMap[0];
-}
+};
 
 const ShowPage = ({ movie, cinemas }) => {
   const [gridLoading, setGridLoading] = useState(false);
@@ -55,7 +55,7 @@ const ShowPage = ({ movie, cinemas }) => {
     setDates(_dates);
 
     console.log("BEGINNING");
-    console.log(supabase.auth);
+    console.log("AUTH", client);
 
     const { query } = Router;
 
@@ -148,7 +148,7 @@ const ShowPage = ({ movie, cinemas }) => {
     axiosClient
       .get(`api/v1/screening/${id}?transaction=${getSession ? "1" : "0"}`, {
         headers: {
-          Authorization: `${supabase.auth.currentSession?.access_token || " "}`,
+          Authorization: `${client.accessToken || " "}`,
         },
       })
       .then((res) => {
@@ -184,28 +184,27 @@ const ShowPage = ({ movie, cinemas }) => {
     if (gridLoading) {
       return;
     }
-    const seat = seatsGrid[rowIndex][columnIndex]
+    const seat = seatsGrid[rowIndex][columnIndex];
     if (seat.status === 0 || seat.status == 3 || seat.status == 4) {
       alert("Seat unavailable.");
       return;
     }
-    if (seat.status === 5 ) {
+    if (seat.status === 5) {
       alert("Seat is already purchased by you.");
-      return
+      return;
     }
     setGridLoading(true);
     const response = axiosClient
       .post(
         "api/v1/booking",
         {
-          user_id: supabase.auth.currentUser.id,
           seat_id: seat.id,
           screening_id: screening.id,
           auditorium_id: screening.auditorium.id,
         },
         {
           headers: {
-            Authorization: `${supabase.auth.currentSession.access_token}`,
+            Authorization: `${client.accessToken}`,
           },
         }
       )
@@ -236,7 +235,6 @@ const ShowPage = ({ movie, cinemas }) => {
         if (err?.response?.data?.message) {
           alert(err.response.data.message);
           getScreeningById(selectedScreeningId, false);
-
         } else {
           alert("Something went wrong. Please try again.");
         }
@@ -281,7 +279,7 @@ const ShowPage = ({ movie, cinemas }) => {
     axiosClient
       .get(url, {
         headers: {
-          Authorization: `${supabase.auth.currentSession?.access_token || " "}`,
+          Authorization: `${client.accessToken || " "}`,
         },
       })
       .then((res) => {
@@ -593,25 +591,25 @@ const ShowPage = ({ movie, cinemas }) => {
                 <div className="flex-1 flex flex-col justify-center items-center min-h-[25rem]">
                   {!gridLoading ? (
                     <>
-                    {seatsGrid.map((row, rowIndex) => {
-                      return (
-                        <SeatRow
-                          key={rowIndex}
-                          row={row}
-                          rowIndex={rowIndex}
-                          onSeatClick={(_rowIndex, _colIndex) => {
-                            onGridClick(_rowIndex, _colIndex);
-                          }}
-                          colorFunc={getColor}
-                          rowNameFunc={(rowIndex) => {
-                            return String.fromCharCode(
-                              64 + seatsGrid.length - rowIndex
-                            );
-                          }}
-                        ></SeatRow>
-                      );
-                    })}
-                    <div className="my-5 text-4xl md:text-5xl">Screen</div>
+                      {seatsGrid.map((row, rowIndex) => {
+                        return (
+                          <SeatRow
+                            key={rowIndex}
+                            row={row}
+                            rowIndex={rowIndex}
+                            onSeatClick={(_rowIndex, _colIndex) => {
+                              onGridClick(_rowIndex, _colIndex);
+                            }}
+                            colorFunc={getColor}
+                            rowNameFunc={(rowIndex) => {
+                              return String.fromCharCode(
+                                64 + seatsGrid.length - rowIndex
+                              );
+                            }}
+                          ></SeatRow>
+                        );
+                      })}
+                      <div className="my-5 text-4xl md:text-5xl">Screen</div>
                     </>
                   ) : (
                     <>
@@ -631,34 +629,28 @@ const ShowPage = ({ movie, cinemas }) => {
 
 export default ShowPage;
 
-export const getServerSideProps = async ({ params, res }) => {
+export const getServerSideProps = async ({ params }) => {
   const movieId = params.id;
-  const { data: movie, error } = await supabase
-    .from("movies")
-    .select("*")
-    .eq("id", movieId)
-    .single();
 
-  if (error) {
+  try {
+    const movieRes = await axiosClient.get("/api/v1/movie/" + movieId);
+
+    const { data: movie } = movieRes.data;
+
+    const cinemasRes = await axiosClient.get("/api/v1/cinema");
+
+    const { data: cinemas } = cinemasRes.data;
+
+    return {
+      props: {
+        cinemas,
+        movie,
+      },
+    };
+  } catch (error) {
     console.log(error);
   }
-
-  const { data: cinemas, error: cinemaerr } = await supabase
-    .from("cinemas")
-    .select(`id, name, address`);
-
-  if (cinemaerr) {
-    console.log(error);
-  }
-  return {
-    props: {
-      cinemas,
-      movie,
-    },
-  };
 };
-
-
 
 export const colorMap = {
   0: {
@@ -696,5 +688,5 @@ export const colorMap = {
     border: "#7020a0", // My seats
     text: "#7020a0",
     backgroundColor: "#7020a0",
-  }
+  },
 };

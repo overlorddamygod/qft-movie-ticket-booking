@@ -1,7 +1,8 @@
+import axios from "axios";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setSession } from "../store/slices/sessionSlice";
-import { supabase } from "../utils/supabaseClient";
+import client from "../utils/goAuth";
 import Header from "./Header";
 
 function Layout({ auto = true, showNavs = true, children }) {
@@ -9,12 +10,32 @@ function Layout({ auto = true, showNavs = true, children }) {
 
   useEffect(() => {
     // console.log(supabase.auth.session())
-    dispatch(setSession(supabase.auth.session()));
+    // dispatch(setSession(supabase.auth.session()));
     // console.log(supabase.auth.session())
+    const listener = async (user) => {
+      // if (user) {
+      //   dispatch(setSession(user));
+      // }
+      console.log("AUTH CHANGED", user);
+      dispatch(setSession(user));
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      dispatch(setSession(session));
-    });
+      // if (user) {
+      await axios.post("/api/authToken", null, {
+        headers: {
+          Authorization: `${client.accessToken || ""}`,
+        },
+      });
+      // }
+    };
+    client.onAuthChanged(listener);
+    // supabase.auth.onAuthStateChange((_event, session) => {
+    //   console.log("AUTHCHANGED", session)
+    //   dispatch(setSession(session));
+    // });
+    return () => {
+      console.log("REMOVING LISTENER");
+      client.removeListener(listener);
+    };
   }, []);
 
   return (
@@ -28,7 +49,7 @@ function Layout({ auto = true, showNavs = true, children }) {
             : "flex justify-between items-center"
         }`}
       >
-        <Header showNavs={showNavs}/>
+        <Header showNavs={showNavs} />
       </header>
       {children}
     </div>

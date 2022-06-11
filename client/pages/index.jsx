@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Layout from "../components/Layout";
 import MovieCard from "../components/MovieCard";
-import { supabase } from "../utils/supabaseClient";
+import axiosClient from "../utils/axiosClient";
 
 export default function Home({ movies, nowshowing }) {
   // console.log(movies, nowshowing)
@@ -11,8 +11,8 @@ export default function Home({ movies, nowshowing }) {
         <title>QFT | Home</title>
       </Head>
       <>
-      <ShowCase header="Now Showing" movies={nowshowing}/>
-      <ShowCase header="Movies" movies={movies}/>
+        <ShowCase header="Now Showing" movies={nowshowing} />
+        <ShowCase header="Movies" movies={movies} />
       </>
     </Layout>
   );
@@ -26,30 +26,34 @@ const ShowCase = ({ header = "", movies }) => {
       </div>
       <div className="flex">
         {movies.map((movie) => {
-          return <MovieCard movie={movie} key={movie.id}/>;
+          return <MovieCard movie={movie} key={movie.id} />;
         })}
       </div>
     </>
   );
 };
 
-
 // get props
 export const getServerSideProps = async () => {
-  const { data: movies, error } = await supabase.from("movies").select("*");
-  if (error) {
-    console.error(error);
-  }
+  try {
+    const res = await axiosClient.get("/api/v1/movie/home");
 
-  const { data: nowshowing, error: err } = await supabase
-    .rpc("nowshowing")
-  if (err) {
-    console.error(err);
+    const { data } = res.data;
+
+    return {
+      props: {
+        nowshowing: data.nowShowing,
+        movies: data.movies,
+      },
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      props: {
+        movies: [],
+        nowshowing: [],
+        error: true,
+      },
+    };
   }
-  return {
-    props: {
-      movies,
-      nowshowing,
-    },
-  };
 };

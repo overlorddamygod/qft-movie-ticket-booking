@@ -200,6 +200,11 @@
   "resolved" "https://registry.npmjs.org/@types/use-sync-external-store/-/use-sync-external-store-0.0.3.tgz"
   "version" "0.0.3"
 
+"@types/web@^0.0.64":
+  "integrity" "sha512-WhKccWzApbeiTFznYJZbegURL7zYSS9y6LMBiI+ypffs+eh4XOHXWt5ky5vM5/XhAu+rTGFKixbJtgmGawvEEA=="
+  "resolved" "https://registry.npmjs.org/@types/web/-/web-0.0.64.tgz"
+  "version" "0.0.64"
+
 "@typescript-eslint/parser@^5.21.0":
   "integrity" "sha512-n/IzU87ttzIdnAH5vQ4BBDnLPly7rC5VnjN3m0xBG82HK6rhRxnCb3w/GyWbNDghPd+NktJqB/wl6+YkzZ5T5Q=="
   "resolved" "https://registry.npmjs.org/@typescript-eslint/parser/-/parser-5.26.0.tgz"
@@ -1147,6 +1152,14 @@
     "ignore" "^5.2.0"
     "merge2" "^1.4.1"
     "slash" "^3.0.0"
+
+"go-auth-client@^1.0.13":
+  "integrity" "sha512-EAnq0QzEpqQkGgfakmzc5noS9R0QjXz+voTkRWTuz0nJZdUeD+XUl5LXaZPtiODX4Vnf8CxnyPmnTmPpj3KvnA=="
+  "resolved" "https://registry.npmjs.org/go-auth-client/-/go-auth-client-1.0.13.tgz"
+  "version" "1.0.13"
+  dependencies:
+    "@types/web" "^0.0.64"
+    "axios" "^0.27.2"
 
 "has-bigints@^1.0.1", "has-bigints@^1.0.2":
   "integrity" "sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ=="

@@ -1,5 +1,3 @@
-import React from "react";
-
 const SelectInput = (props) => {
   const { children, ...rest } = props;
   return (

@@ -1,46 +1,44 @@
-import React from 'react'
-import Layout from '../../../components/Layout'
-import { supabase } from '../../../utils/supabaseClient'
-import Head from 'next/head'
-import SeatLayoutDesign from '../../../components/SeatLayoutDesign'
+import Head from "next/head";
+import Layout from "../../../components/Layout";
+import SeatLayoutDesign from "../../../components/SeatLayoutDesign";
+import axiosClient from "../../../utils/axiosClient";
 
-const Seats = ({cinemas}) => {
+const Seats = ({ cinemas }) => {
   return (
     <Layout>
-            <Head>
+      <Head>
         <title>QFT Admin | Configure Seats</title>
       </Head>
-        <SeatLayoutDesign cinemas={cinemas}/>
+      <SeatLayoutDesign cinemas={cinemas} />
     </Layout>
-  )
-}
+  );
+};
 
-export default Seats
-
+export default Seats;
 export const getServerSideProps = async () => {
-    const { data: cinemas, error } = await supabase
-      .from("cinemas")
-      .select(`
-        id,
-        name,
-        address,
-        auditoriums!auditorium_cinema_id_fkey (id, cinema_id, name)
-      `)
-      
-    if (error) {
-      console.log(error);
-    }
+  try {
+    const cinemasRes = await axiosClient.get("/api/v1/cinema?auditorium=1");
 
-    // turn to key value pair
-    const cinemasObj = {}
-    cinemas.forEach(cinema => {
-        cinemasObj[cinema.id] = cinema
-    })
+    const { data: cinemas } = cinemasRes.data;
 
-    // }
+    const cinemasObj = {};
+    cinemas.forEach((cinema) => {
+      cinemasObj[cinema.id] = cinema;
+    });
+
     return {
       props: {
         cinemas: cinemasObj,
+        error: false,
       },
     };
-  };
+  } catch (err) {
+    console.error(err);
+    return {
+      props: {
+        cinemas: {},
+        error: true,
+      },
+    };
+  }
+};
