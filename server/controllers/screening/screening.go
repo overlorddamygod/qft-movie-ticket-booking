@@ -3,30 +3,30 @@ package screening
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
+	"github.com/overlorddamygod/qft-server/controllers"
 	TransactionController "github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/models"
 	"gorm.io/gorm"
 )
 
 type ScreeningController struct {
-	config *configs.Config
-	db     *gorm.DB
+	controllers.BaseController
 }
 
 func NewScreeningController(config *configs.Config, db *gorm.DB) *ScreeningController {
 	return &ScreeningController{
-		config: config,
-		db:     db,
+		BaseController: *controllers.NewBaseController(config, db),
 	}
 }
 
 type GetScreeningParams struct {
-	ScreeningId int `json:"screening_id" uri:"screening_id" binding:"required"`
+	ScreeningId int `json:"id" uri:"id" binding:"required"`
 }
 
 func (sc *ScreeningController) GetScreening(c *gin.Context) {
@@ -48,7 +48,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 
 	var screening models.Screening
 
-	err := sc.db.Joins("Auditorium").Preload("Auditorium.Seats").Find(&screening, "screenings.id = ?", params.ScreeningId).Error
+	err := sc.GetDb().Joins("Auditorium").Preload("Auditorium.Seats").Find(&screening, "screenings.id = ?", params.ScreeningId).Error
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -60,10 +60,10 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 
 	screening.Bookable = screening.IsBookable()
 
-	// sc.db.Find()
+	// sc.GetDb().Find()
 	var booked []models.Booking
 
-	result := sc.db.Joins("Transaction").Find(&booked, `auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR paid = true)`, screening.AuditoriumId, screening.Id)
+	result := sc.GetDb().Joins("Transaction").Find(&booked, `auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR paid = true)`, screening.AuditoriumId, screening.Id)
 
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -125,7 +125,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 
 	if fetchTransaction == "1" {
 
-		transaction, err := TransactionController.GetCreateTransaction(sc.db, user_uuid, params.ScreeningId)
+		transaction, err := TransactionController.GetCreateTransaction(sc.GetDb(), user_uuid, params.ScreeningId)
 
 		if err != nil {
 			c.JSON(400, gin.H{
@@ -193,7 +193,7 @@ func (sc *ScreeningController) GetScreenings(c *gin.Context) {
 
 	var screenings []models.Screening
 
-	err := sc.db.Joins("Auditorium").Where("movie_id = ? AND screenings.cinema_id = ? AND start_time < ? AND start_time > ? AND start_time > now()", params.MovieId, params.CinemaId, endDate, startDate).Find(&screenings).Error
+	err := sc.GetDb().Joins("Auditorium").Where("movie_id = ? AND screenings.cinema_id = ? AND start_time < ? AND start_time > ? AND start_time > now()", params.MovieId, params.CinemaId, endDate, startDate).Find(&screenings).Error
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -207,5 +207,64 @@ func (sc *ScreeningController) GetScreenings(c *gin.Context) {
 		"error":   false,
 		"message": "Success",
 		"data":    screenings,
+	})
+}
+
+type CreateScreeningParams struct {
+	MovieId      string    `json:"movie_id" form:"movie_id" binding:"required,uuid"`
+	CinemaId     string    `json:"cinema_id" form:"cinema_id" binding:"required,uuid"`
+	AuditoriumId int       `json:"auditorium_id" form:"auditorium_id" binding:"required"`
+	StartTime    time.Time `json:"start_time" form:"start_time" binding:"required"`
+}
+
+// create screening
+func (sc *ScreeningController) CreateScreening(c *gin.Context) {
+	var params CreateScreeningParams
+
+	if err := c.BindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Invalid params",
+		})
+		return
+	}
+
+	movieId, err := uuid.Parse(params.MovieId)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Invalid params",
+		})
+		return
+	}
+	cinemaId, err := uuid.Parse(params.CinemaId)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Invalid params",
+		})
+		return
+	}
+
+	res := sc.GetDb().Create(&models.Screening{
+		MovieId:      movieId,
+		CinemaId:     cinemaId,
+		AuditoriumId: params.AuditoriumId,
+		StartTime:    params.StartTime,
+	})
+
+	if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   true,
+			"message": "Error creating screening",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"error":   false,
+		"message": "Success",
 	})
 }

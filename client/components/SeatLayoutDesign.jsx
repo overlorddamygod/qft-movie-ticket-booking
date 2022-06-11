@@ -91,7 +91,7 @@ const SeatLayoutDesign = ({ cinemas }) => {
   const onSubmit = async () => {
     console.log(audiId);
 
-    console.log(d, e);
+    // console.log(d, e);
     const seatsData = [];
     grid.forEach((row, i) => {
       row.forEach((col, j) => {

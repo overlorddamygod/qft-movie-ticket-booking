@@ -5,9 +5,6 @@ import (
 	"log"
 
 	"github.com/overlorddamygod/qft-server/configs"
-	"github.com/overlorddamygod/qft-server/controllers/booking"
-	"github.com/overlorddamygod/qft-server/controllers/screening"
-	"github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/db"
 	"github.com/overlorddamygod/qft-server/server"
 	"github.com/overlorddamygod/qft-server/storage"
@@ -21,9 +18,9 @@ func main() {
 			configs.NewConfig(".env"),
 			db.NewDB,
 			storage.NewStorage,
-			booking.NewBookingController,
-			screening.NewScreeningController,
-			transaction.NewTransactionController,
+			// booking.NewBookingController,
+			// screening.NewScreeningController,
+			// transaction.NewTransactionController,
 			server.NewRouter,
 		),
 		fx.Populate(&configs.MainConfig),
