@@ -14,7 +14,7 @@ const Payment = ({ onCancel, data, onSuccess }) => {
     setPaymentLoading(true);
     try {
       const res = await axiosClient.post(
-        "/api/v1/transaction/pay",
+        "/transaction/pay",
         {
           transaction_id: data.transactionId,
           amount: data.amount,
@@ -61,7 +61,7 @@ const Payment = ({ onCancel, data, onSuccess }) => {
   const confirmPayment = (patmentIntentId) => {
     axiosClient
       .post(
-        "/api/v1/transaction/confirm",
+        "/transaction/confirm",
         {
           payment_intent_id: patmentIntentId,
           transaction_id: data.transactionId,

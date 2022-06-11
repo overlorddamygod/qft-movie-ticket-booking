@@ -22,7 +22,7 @@ const Bookings = ({ booking }) => {
 
   // const getBooking = async () => {
   //   try {
-  //     const res = await axios.get("/api/v1/transaction/" + router.query.id, {
+  //     const res = await axios.get("/transaction/" + router.query.id, {
   //       headers: {
   //         Authorization: `${client.accessToken}`,
   //       },
@@ -55,7 +55,7 @@ export const getServerSideProps = async ({ req, params }) => {
   try {
     const {
       data: { data: transaction },
-    } = await axios.get("/api/v1/transaction/" + transactionId, {
+    } = await axios.get("/transaction/" + transactionId, {
       headers: {
         Authorization: `${accessToken}`,
       },

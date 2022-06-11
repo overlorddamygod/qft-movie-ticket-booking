@@ -17,7 +17,7 @@ const Seats = ({ cinemas }) => {
 export default Seats;
 export const getServerSideProps = async () => {
   try {
-    const cinemasRes = await axiosClient.get("/api/v1/cinema?auditorium=1");
+    const cinemasRes = await axiosClient.get("/cinema?auditorium=1");
 
     const { data: cinemas } = cinemasRes.data;
 

@@ -146,7 +146,7 @@ const ShowPage = ({ movie, cinemas }) => {
       setLoading(true);
     }
     axiosClient
-      .get(`api/v1/screening/${id}?transaction=${getSession ? "1" : "0"}`, {
+      .get(`/screening/${id}?transaction=${getSession ? "1" : "0"}`, {
         headers: {
           Authorization: `${client.accessToken || " "}`,
         },
@@ -196,7 +196,7 @@ const ShowPage = ({ movie, cinemas }) => {
     setGridLoading(true);
     const response = axiosClient
       .post(
-        "api/v1/booking",
+        "/booking",
         {
           seat_id: seat.id,
           screening_id: screening.id,
@@ -271,7 +271,7 @@ const ShowPage = ({ movie, cinemas }) => {
       setFromQuery(false);
     }
 
-    const url = `api/v1/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`;
+    const url = `/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`;
 
     if (date) {
       url += `&date=${date}`;
@@ -633,11 +633,11 @@ export const getServerSideProps = async ({ params }) => {
   const movieId = params.id;
 
   try {
-    const movieRes = await axiosClient.get("/api/v1/movie/" + movieId);
+    const movieRes = await axiosClient.get("/movie/" + movieId);
 
     const { data: movie } = movieRes.data;
 
-    const cinemasRes = await axiosClient.get("/api/v1/cinema");
+    const cinemasRes = await axiosClient.get("/cinema");
 
     const { data: cinemas } = cinemasRes.data;
 

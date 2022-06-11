@@ -30,7 +30,7 @@ const AddScreening = ({ cinemas, movies }) => {
     };
 
     try {
-      const res = await axiosClient.post("/api/v1/screening", screening);
+      const res = await axiosClient.post("/screening", screening);
 
       alert("Added Screening Successfully.");
     } catch (error) {
@@ -148,11 +148,11 @@ export default AddScreening;
 
 export const getServerSideProps = async () => {
   try {
-    const cinemasRes = await axiosClient.get("/api/v1/cinema?auditorium=1");
+    const cinemasRes = await axiosClient.get("/cinema?auditorium=1");
 
     const { data: cinemas } = cinemasRes.data;
 
-    const moviesRes = await axiosClient.get("/api/v1/movie");
+    const moviesRes = await axiosClient.get("/movie");
 
     const { data: movies } = moviesRes.data;
 

@@ -108,7 +108,7 @@ const SeatLayoutDesign = ({ cinemas }) => {
     });
 
     try {
-      const res = await axiosClient.post(`/api/v1/auditorium/${audiId}/seats`, {
+      const res = await axiosClient.post(`/auditorium/${audiId}/seats`, {
         rows,
         columns,
         seats: seatsData,

@@ -36,7 +36,7 @@ const ShowCase = ({ header = "", movies }) => {
 // get props
 export const getServerSideProps = async () => {
   try {
-    const res = await axiosClient.get("/api/v1/movie/home");
+    const res = await axiosClient.get("movie/home");
 
     const { data } = res.data;
 
@@ -47,7 +47,7 @@ export const getServerSideProps = async () => {
       },
     };
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return {
       props: {
         movies: [],

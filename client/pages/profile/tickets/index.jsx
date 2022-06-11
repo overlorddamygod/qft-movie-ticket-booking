@@ -40,7 +40,7 @@ export const getServerSideProps = async ({ req }) => {
   try {
     const {
       data: { data: bookings },
-    } = await axios.get("/api/v1/transaction", {
+    } = await axios.get("/transaction", {
       headers: {
         Authorization: `${accessToken}`,
       },
