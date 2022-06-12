@@ -21,7 +21,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/qft:${{ github.sha }}
+        tags: ${{ secrets.DOCKER_USERNAME }}/qft:latest
         file: ./server/Dockerfile
         context: ./server
 
@@ -53,39 +53,29 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/qft-client
+        tags: ${{ secrets.DOCKER_USERNAME }}/qft-client:latest
         file: ./client/Dockerfile
         context: ./client
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-api, build-client]
+    steps:
+    # Set the target Azure Kubernetes Service (AKS) cluster. 
+    - uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: ${{ env.CLUSTER_NAME }}
+        resource-group: ${{ env.CLUSTER_RESOURCE_GROUP }}
     
-    # # Set the target Azure Kubernetes Service (AKS) cluster. 
-    # - uses: azure/aks-set-context@v1
-    #   with:
-    #     creds: '${{ secrets.AZURE_CREDENTIALS }}'
-    #     cluster-name: ${{ env.CLUSTER_NAME }}
-    #     resource-group: ${{ env.CLUSTER_RESOURCE_GROUP }}
+    # Deploy app to AKS
+    - name: Deploy All deployment.yml
+      uses: azure/k8s-deploy@v1
+      with:
+        manifests: |
+          ${{ github.workspace }}/k8s/qft.client.deployment.yml
+          ${{ github.workspace }}/k8s/qft.api.deployment.yml
+          ${{ github.workspace }}/k8s/qft.goauth.deployment.yml
+          ${{ github.workspace }}/k8s/qft.http.deployment.yml
     
-    # # Create namespace if doesn't exist
-    # - run: |
-    #     kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o json | kubectl apply -f -
-    
-    # # Create image pull secret for ACR
-    # - uses: azure/k8s-create-secret@v1
-    #   with:
-    #     container-registry-url: ${{ env.REGISTRY_NAME }}.azurecr.io
-    #     container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
-    #     container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-    #     secret-name: ${{ env.SECRET }}
-    #     namespace: ${{ env.NAMESPACE }}
-    #     arguments: --force true
-    
-    # # Deploy app to AKS
-    # - uses: azure/k8s-deploy@v1
-    #   with:
-    #     manifests: |
-    #       ${{ github.workspace }}/manifests/deployment.yaml
-    #       ${{ github.workspace }}/manifests/service.yaml
-    #     images: |
-    #       ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.APP_NAME }}:${{ github.sha }}
-    #     imagepullsecrets: |
-    #       ${{ env.SECRET }}
-    #     namespace: ${{ env.NAMESPACE }}
+
