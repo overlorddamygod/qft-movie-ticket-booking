@@ -3,7 +3,7 @@ QFT Movie Booking App
 Design Credit [samirjay49](https://dribbble.com/samirjay49)
 ## Getting Started
 
-Copy `sample.env` file as `.env` in the root directory and edit all the values.
+Copy `sample.env` file as `.env.development` or `env.production` in the root directory and edit all the values.
 
 First, run the development server:
 

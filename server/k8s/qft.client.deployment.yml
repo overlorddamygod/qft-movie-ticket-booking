@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qft-client
+spec:
+  selector:
+    matchLabels:
+      app: qft-client
+  template:
+    metadata:
+      labels:
+        app: qft-client
+    spec:
+      containers:
+      - name: qft-client
+        image: overlord077/qft-client
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "0.5"
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qft-client-svc
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  selector:
+    app: qft-client
