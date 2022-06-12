@@ -1,6 +1,8 @@
-# QFT Movie Booking System
+# [QFT Movie Booking System](http://qft.1a074a4ade81432ea931.eastasia.aksapp.io)
 
 Usage docs on `USAGE.md` file in the root directory.
+
+Urls: http://qft.1a074a4ade81432ea931.eastasia.aksapp.io or https://qft.vercel.app
 
 ![System Design](./assets/design.png)
 
