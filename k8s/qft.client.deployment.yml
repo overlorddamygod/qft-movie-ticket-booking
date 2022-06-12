@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: qft-client
-        image: overlord077/qft-client
+        image: overlord077/qft-client:latest
         imagePullPolicy: Always
         resources:
           limits:

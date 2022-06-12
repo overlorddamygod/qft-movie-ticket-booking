@@ -21,7 +21,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/qft:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/qft:${{ github.sha }}
         file: ./server/Dockerfile
         context: ./server
 
@@ -53,7 +53,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/qft-client:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/qft-client:${{ github.sha }}
         file: ./client/Dockerfile
         context: ./client
   
@@ -79,5 +79,9 @@ jobs:
           ${{ github.workspace }}/k8s/qft.api.deployment.yml
           ${{ github.workspace }}/k8s/qft.goauth.deployment.yml
           ${{ github.workspace }}/k8s/qft.http.deployment.yml
+        images: |
+          ${{ secrets.DOCKER_USERNAME }}/qft-client:${{ github.sha }}
+          ${{ secrets.DOCKER_USERNAME }}/qft:${{ github.sha }}
+
     
 
