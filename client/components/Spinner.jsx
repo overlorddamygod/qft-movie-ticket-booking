@@ -1,5 +1,3 @@
-import React from "react";
-
 const Spinner = () => {
   return (
     <div className="text-center">
@@ -23,4 +21,4 @@ const Spinner = () => {
   );
 };
 
-export default Spinner
+export default Spinner;

@@ -13,6 +13,9 @@ type Cinema struct {
 	Address string `gorm:"column:address" json:"address"`
 
 	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+
+	// auditoriums
+	Auditoriums []Auditorium `gorm:"foreignKey:CinemaId" json:"auditoriums"`
 }
 
 func (Cinema) TableName() string {

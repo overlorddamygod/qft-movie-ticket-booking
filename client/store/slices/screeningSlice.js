@@ -1,5 +1,4 @@
 import { createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
-import { supabase } from "../../utils/supabaseClient";
 
 const initialState = {
 };

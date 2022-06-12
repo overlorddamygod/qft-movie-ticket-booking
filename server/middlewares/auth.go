@@ -5,10 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/overlorddamygod/qft-server/configs"
 )
 
 type CustomClaims struct {
-	Sub string `json:"sub"`
+	UserId string `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -25,27 +26,26 @@ func IsLoggedIn() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
-		token, _ := jwt.ParseWithClaims(accessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-			// since we only use the one private key to sign the tokens,
-			// we also only use its public counter part to verify
-			return "LOL", nil
+		token, err := jwt.ParseWithClaims(accessToken, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return configs.MainConfig.JwtAccessSecret, nil
 		})
 
-		fmt.Println(token, token.Claims)
-
-		// if err != nil {
-		// 	c.JSON(401, gin.H{
-		// 		"error":   true,
-		// 		"message": "Unauthorized",
-		// 	})
-		// 	c.Abort()
-		// 	return
-		// }
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(401, gin.H{
+				"error":   true,
+				"message": "Unauthorized",
+			})
+			c.Abort()
+			return
+		}
 
 		claims := token.Claims.(*CustomClaims)
-		// fmt.Println(claims.UserId)
-		c.Set("user_id", claims.Sub)
+
+		c.Set("user_id", claims.UserId)
 
 		c.Next()
 	}

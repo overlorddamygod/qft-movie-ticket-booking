@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qft-api
+spec:
+  selector:
+    matchLabels:
+      app: qft-api
+  template:
+    metadata:
+      labels:
+        app: qft-api
+    spec:
+      containers:
+      - name: qft-api
+        image: overlord077/qft:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "0.5"
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: qft-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qft-svc
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    app: qft-api

@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../utils/supabaseClient";
+import axiosClient from "../utils/axiosClient";
 import { Box, Seat, SeatRow } from "./Seats";
 
-const SeatLayoutDesign = ({
-  cinemas,
-}) => {
+const SeatLayoutDesign = ({ cinemas }) => {
   const [rows, setRows] = useState(10);
   const [columns, setColumns] = useState(10);
   const [selectedType, setSelectedType] = useState("normal");
@@ -92,16 +90,8 @@ const SeatLayoutDesign = ({
 
   const onSubmit = async () => {
     console.log(audiId);
-    const { data: d, err: e } = await supabase
-      .from("auditoriums")
-      .update({
-        rows: rows,
-        columns: columns,
-      })
-      .match({
-        id: audiId,
-      });
-    console.log(d, e);
+
+    // console.log(d, e);
     const seatsData = [];
     grid.forEach((row, i) => {
       row.forEach((col, j) => {
@@ -112,16 +102,20 @@ const SeatLayoutDesign = ({
           available: col.status != 0,
           type: col.type,
           price: typeMap[col.type].price,
-          auditorium_id: audiId,
+          auditorium_id: +audiId,
         });
       });
     });
-    const { data, error } = await supabase.from("seats").insert(seatsData);
-    if (error) {
-      alert("Error setting layout")
-    } else {
-      console.log(data, error);
-      alert("Succesfully changed layout")
+
+    try {
+      const res = await axiosClient.post(`/auditorium/${audiId}/seats`, {
+        rows,
+        columns,
+        seats: seatsData,
+      });
+      alert("Succesfully changed layout");
+    } catch (err) {
+      alert("Error setting layout");
     }
   };
 

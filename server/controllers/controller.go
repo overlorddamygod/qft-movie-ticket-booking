@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
@@ -20,7 +22,11 @@ func NewBaseController(config *configs.Config, db *gorm.DB) *BaseController {
 }
 
 func (BaseController) GetUserUUid(c *gin.Context) (uuid.UUID, error) {
-	user_id, _ := c.Get("user_id")
+	user_id, exists := c.Get("user_id")
+
+	if !exists {
+		return uuid.Nil, errors.New("user_id not found")
+	}
 
 	return uuid.Parse(user_id.(string))
 }

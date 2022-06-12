@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Database DBConfig
-	Stripe   StripeConfig
-	Storage  StorageConfig
+	Database        DBConfig
+	Stripe          StripeConfig
+	Storage         StorageConfig
+	JwtAccessSecret []byte
 }
 
 type StripeConfig struct {
@@ -46,6 +47,7 @@ func NewConfig(envPath string) func() *Config {
 			Stripe: StripeConfig{
 				SecretKey: getEnv("STRIPE_SECRET_KEY", "sk_test_51L6teVLq5jVwlbtcZgpvLz7ZTaMreTBHH5VxQwBIydc1OAlckzVSPdVCOoCBCZJ035sjXEnjVHJqGEW9H1l7Ls6700XqXw5B7r"),
 			},
+			JwtAccessSecret: []byte(getEnv("JWT_ACCESS_SECRET", "31221324sdffwefewsf")),
 		}
 		return config
 	}

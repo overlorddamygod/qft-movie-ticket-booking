@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
+	"github.com/overlorddamygod/qft-server/controllers"
 	TransactionController "github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/models"
 
@@ -16,22 +15,19 @@ import (
 )
 
 type BookingController struct {
-	config *configs.Config
-	db     *gorm.DB
+	controllers.BaseController
 }
 
 func NewBookingController(config *configs.Config, db *gorm.DB) *BookingController {
 	return &BookingController{
-		config: config,
-		db:     db,
+		BaseController: *controllers.NewBaseController(config, db),
 	}
 }
 
 type CreateBookingParams struct {
-	UserID       uuid.UUID `json:"user_id" binding:"required"`
-	SeatID       int       `json:"seat_id" binding:"required"`
-	AuditoriumID int       `json:"auditorium_id" binding:"required"`
-	ScreeningID  int       `json:"screening_id" binding:"required"`
+	SeatID       int `json:"seat_id" binding:"required"`
+	AuditoriumID int `json:"auditorium_id" binding:"required"`
+	ScreeningID  int `json:"screening_id" binding:"required"`
 	// Status       int8   `json:"status" binding:"required"`
 }
 
@@ -47,11 +43,19 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 	var transaction models.Transaction
 
-	// userUUID, err := uuid.Parse(params.UserID)
+	userUUID, err := bc.GetUserUUid(c)
+
+	if err != nil {
+		c.JSON(401, gin.H{
+			"error":   true,
+			"message": "Unauthorized",
+		})
+		return
+	}
 
 	bookedStatus := "booked"
 
-	err := bc.db.Transaction(func(tx *gorm.DB) error {
+	err = bc.GetDb().Transaction(func(tx *gorm.DB) error {
 		var seat models.Seat
 		result := tx.First(&seat, "id = ?", params.SeatID)
 
@@ -67,26 +71,8 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 			return errors.New("seat is not available")
 		}
 
-		result = tx.First(&transaction, "user_id = ? AND screening_id = ? AND expires_at > now()", params.UserID, params.ScreeningID)
-
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				transaction.UserId = params.UserID
-				transaction.ScreeningId = params.ScreeningID
-				transaction.CreatedAt = time.Now()
-				transaction.ExpiresAt = transaction.CreatedAt.Add(30 * time.Minute)
-
-				result = tx.Create(&transaction)
-
-				if result.Error != nil {
-					return result.Error
-				}
-			} else {
-				return result.Error
-			}
-		}
-
-		transaction, err := TransactionController.GetCreateTransaction(tx, params.UserID, params.ScreeningID)
+		t, err := TransactionController.GetCreateTransaction(tx, userUUID, params.ScreeningID)
+		transaction = t
 
 		if err != nil {
 			return err
@@ -125,7 +111,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 				AuditoriumId:  params.AuditoriumID,
 				ScreeningId:   params.ScreeningID,
 				TransactionId: transaction.Id,
-				UserId:        params.UserID,
+				UserId:        userUUID,
 				Status:        2,
 			}
 			if err := tx.Create(&booking).Error; err != nil {
@@ -139,7 +125,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 			return errors.New("seat is not available")
 		}
 
-		if booked.UserId == params.UserID {
+		if booked.UserId == userUUID {
 			if booked.Transaction.IsExpired() {
 				return errors.New("transaction is expired")
 			}
