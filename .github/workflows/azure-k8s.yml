@@ -73,9 +73,9 @@ jobs:
       uses: azure/k8s-deploy@v1
       with:
         manifests: |
-          ${{ github.workspace }}/k8s/qft.client.deployment.yml
-          ${{ github.workspace }}/k8s/qft.api.deployment.yml
-          ${{ github.workspace }}/k8s/qft.goauth.deployment.yml
-          ${{ github.workspace }}/k8s/qft.http.deployment.yml
+          /k8s/qft.client.deployment.yml
+          /k8s/qft.api.deployment.yml
+          /k8s/qft.goauth.deployment.yml
+          /k8s/qft.http.deployment.yml
     
 
