@@ -15,7 +15,7 @@ import { SeatRow } from "../../components/Seats";
 import { Seat } from "../../components/Seats";
 import SeatTag from "../../components/SeatTag";
 import Spinner from "../../components/Spinner";
-import axiosClient from "../../utils/axiosClient";
+import axiosClient, {ssrAxiosClient} from "../../utils/axiosClient";
 import client from "../../utils/goAuth";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
@@ -289,7 +289,7 @@ const ShowPage = ({ movie, cinemas }) => {
 
         if (data.length === 0) {
           // setScreenings([])
-          setMessage("No screenings at this date");
+          setMessage("No screenings at this date. Change date or cinema.");
           setLoading(false);
           return;
         }
@@ -633,11 +633,11 @@ export const getServerSideProps = async ({ params }) => {
   const movieId = params.id;
 
   try {
-    const movieRes = await axiosClient.get("/movie/" + movieId);
+    const movieRes = await ssrAxiosClient.get("/movie/" + movieId);
 
     const { data: movie } = movieRes.data;
 
-    const cinemasRes = await axiosClient.get("/cinema");
+    const cinemasRes = await ssrAxiosClient.get("/cinema");
 
     const { data: cinemas } = cinemasRes.data;
 

@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useState } from "react";
 import Layout from "../../../components/Layout";
 import SelectInput from "../../../components/SelectInput";
-import axiosClient from "../../../utils/axiosClient";
+import axiosClient, {ssrAxiosClient} from "../../../utils/axiosClient";
 
 const AddScreening = ({ cinemas, movies }) => {
   const [cinemaId, setCinemaId] = useState("none");
@@ -148,11 +148,11 @@ export default AddScreening;
 
 export const getServerSideProps = async () => {
   try {
-    const cinemasRes = await axiosClient.get("/cinema?auditorium=1");
+    const cinemasRes = await ssrAxiosClient.get("/cinema?auditorium=1");
 
     const { data: cinemas } = cinemasRes.data;
 
-    const moviesRes = await axiosClient.get("/movie");
+    const moviesRes = await ssrAxiosClient.get("/movie");
 
     const { data: movies } = moviesRes.data;
 

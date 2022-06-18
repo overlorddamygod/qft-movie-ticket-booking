@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Layout from "../components/Layout";
 import MovieCard from "../components/MovieCard";
-import axiosClient from "../utils/axiosClient";
+import axiosClient, { ssrAxiosClient } from "../utils/axiosClient";
 
 export default function Home({ movies, nowshowing }) {
   // console.log(movies, nowshowing)
@@ -36,7 +36,7 @@ const ShowCase = ({ header = "", movies }) => {
 // get props
 export const getServerSideProps = async () => {
   try {
-    const res = await axiosClient.get("movie/home");
+    const res = await ssrAxiosClient.get("movie/home");
 
     const { data } = res.data;
 

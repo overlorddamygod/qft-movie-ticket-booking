@@ -1,0 +1,102 @@
+version: '3.9'
+name: "QFT-DEV"
+
+services:
+  # kong:
+  #   container_name: qft-kong
+  #   image: kong:2.1
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${KONG_HTTP_PORT}:8000/tcp
+  #     - ${KONG_HTTPS_PORT}:8443/tcp
+  #   environment:
+  #     KONG_DATABASE: "off"
+  #     KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+  #     # https://github.com/supabase/cli/issues/14
+  #     KONG_DNS_ORDER: LAST,A,CNAME
+  #     KONG_PLUGINS: request-transformer,cors
+  #   volumes:
+  #     - ./kong.yml:/var/lib/kong/kong.yml
+  #   networks:
+  #     - qftNetwork
+
+  goAuth:
+    container_name: go-auth-api
+    image: overlord077/goauth
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DSN: "user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=${POSTGRES_HOST} port=${POSTGRES_PORT} dbname=${POSTGRES_DB}"
+      PORT: "${GO_AUTH_PORT}"
+    ports:
+      - 8080:${GO_AUTH_PORT}
+    restart: on-failure
+    depends_on:
+      - postgresdb
+    networks:
+      - qftNetwork
+
+  qft-api-dev:
+    build:
+      context: ../server
+      dockerfile: Dockerfile.dev
+    container_name: qft-api
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DSN: "user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} host=${POSTGRES_HOST} port=${POSTGRES_PORT} dbname=${POSTGRES_DB}"
+      PORT: "${QFT_API_PORT}"
+    ports:
+      - 8081:${QFT_API_PORT}
+    volumes:
+      - ../server:/go/src/app
+    restart: on-failure
+    depends_on:
+      - postgresdb
+    networks:
+      - qftNetwork
+
+  qft-ui-dev:
+    build:
+      context: ../client
+      dockerfile: Dockerfile.dev
+    ports:
+      - 3000:3000
+    container_name: qft-ui-dev
+    stdin_open: true
+    volumes:
+      - ../client:/usr/src/app/
+    networks:
+      - qftNetwork
+    
+      # - /usr/src/app/node_modules
+    # environment:
+    #   NEXT_PUBLIC_SUPABASE_URL: "https://ttfpouhosupzxjcbzwoh.supabase.co"
+    #   NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjQyOTQzNjUwLCJleHAiOjE5NTg1MTk2NTB9.7r1j2Way4BXYS9Vv3HKo2AzbOwiO2nqsD3OWzPCnXkI"
+    #   NEXT_PUBLIC_SERVER_URL: "http://localhost:8080/api/v1/"
+    #   NEXT_PUBLIC_STORAGE_URL: "https://ttfpouhosupzxjcbzwoh.supabase.co/storage/v1/object/public/transactions-receipts/"
+    #   NEXT_PUBLIC_STRIPE_PUBLIC_KEY: "pk_test_51L6teVLq5jVwlbtcevCzKQeNuzEE8dMzMubWk0vJegT64E9aDdPTohBlN4cyLLkHciEdMrykFcJPHz8m2HuFoVN900oBQxqx9v"
+    #   NEXT_PUBLIC_GO_AUTH_SERVER_URL: "http://go-auth-api:8080/api/v1/auth/"
+
+  postgresdb:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '5432:5432'
+    networks:
+      - qftNetwork
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+networks:
+  qftNetwork:
+    driver: bridge
+
+volumes: 
+  pgdata:

@@ -5,7 +5,7 @@ import BookedTicket from "../../../components/BookedTicket";
 import Layout from "../../../components/Layout";
 // import ProtectedRoute from "../../../components/ProtectedRoute";
 import { getSession } from "../../../store/slices/sessionSlice";
-import axios from "../../../utils/axiosClient";
+import { ssrAxiosClient } from "../../../utils/axiosClient";
 
 const Bookings = ({ booking }) => {
   const router = useRouter();
@@ -55,7 +55,7 @@ export const getServerSideProps = async ({ req, params }) => {
   try {
     const {
       data: { data: transaction },
-    } = await axios.get("/transaction/" + transactionId, {
+    } = await ssrAxiosClient.get("/transaction/" + transactionId, {
       headers: {
         Authorization: `${accessToken}`,
       },
