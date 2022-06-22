@@ -13,7 +13,7 @@ const Header = ({ showNavs = true }) => {
   return (
     <>
       <Link href="/">
-        <a className="text-5xl py-2 cursor-pointer">QFT Cinema</a>
+        <a className="text-5xl py-2 cursor-pointer">QFT</a>
       </Link>
       {showNavs &&
         (session ? (

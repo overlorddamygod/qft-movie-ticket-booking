@@ -39,7 +39,7 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.auditoriums (
-    id bigint NOT NULL,
+    id bigint PRIMARY KEY NOT NULL,
     name text,
     cinema_id text,
     no_seats bigint,
@@ -77,7 +77,7 @@ ALTER SEQUENCE public.auditoriums_id_seq OWNED BY public.auditoriums.id;
 --
 
 CREATE TABLE public.bookings (
-    id bigint NOT NULL,
+    id bigint PRIMARY KEY NOT NULL,
     transaction_id uuid DEFAULT public.uuid_generate_v4(),
     user_id text,
     seat_id bigint,
@@ -116,7 +116,7 @@ ALTER SEQUENCE public.bookings_id_seq OWNED BY public.bookings.id;
 --
 
 CREATE TABLE public.cinemas (
-    id text NOT NULL,
+    id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4() NOT NULL,
     name text,
     address text,
     created_at timestamp with time zone
@@ -147,7 +147,7 @@ ALTER TABLE public.logs OWNER TO webadmin;
 --
 
 CREATE TABLE public.movies (
-    id text NOT NULL,
+    id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4() NOT NULL,
     name text,
     description text,
     banner text,
@@ -165,7 +165,7 @@ ALTER TABLE public.movies OWNER TO webadmin;
 --
 
 CREATE TABLE public.refresh_tokens (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4() NOT NULL,
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone,
@@ -184,7 +184,7 @@ ALTER TABLE public.refresh_tokens OWNER TO webadmin;
 --
 
 CREATE TABLE public.screenings (
-    id bigint NOT NULL,
+    id bigint PRIMARY KEY NOT NULL,
     auditorium_id bigint,
     cinema_id text,
     movie_id text,
@@ -221,7 +221,7 @@ ALTER SEQUENCE public.screenings_id_seq OWNED BY public.screenings.id;
 --
 
 CREATE TABLE public.seats (
-    id bigint NOT NULL,
+    id bigint PRIMARY KEY NOT NULL,
     auditorium_id bigint,
     "row" bigint,
     number bigint,
@@ -260,7 +260,7 @@ ALTER SEQUENCE public.seats_id_seq OWNED BY public.seats.id;
 --
 
 CREATE TABLE public.transactions (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id text,
     screening_id bigint,
     created_at timestamp with time zone,
@@ -278,7 +278,7 @@ ALTER TABLE public.transactions OWNER TO webadmin;
 --
 
 CREATE TABLE public.users (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4() NOT NULL,
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone,

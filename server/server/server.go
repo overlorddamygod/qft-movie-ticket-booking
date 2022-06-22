@@ -72,6 +72,7 @@ func RegisterServer(config *configs.Config, db *gorm.DB, storage *storage_go.Cli
 		movieGroup := v1.Group("movie")
 		{
 			movieC := movie.NewMovieController(config, db)
+			movieGroup.POST("", movieC.CreateMovie)
 			// cinemaGroup.Use(middlewares.IsLoggedIn())
 			movieGroup.GET("/:id", movieC.GetMovie)
 			movieGroup.GET("", movieC.GetMovies)

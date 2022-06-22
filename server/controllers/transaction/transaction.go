@@ -315,7 +315,7 @@ func (tc *TransactionController) GetUserTransactions(c *gin.Context) {
 	var transactions []models.Transaction
 	if err := tc.GetDb().Preload("Bookings", func(t *gorm.DB) *gorm.DB {
 		return t.Preload("Seat")
-	}).Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").Find(&transactions, "user_id = ? AND paid = true", userUUID).Error; err != nil {
+	}).Preload("Screening").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").Order("expires_at desc").Find(&transactions, "user_id = ? AND paid = true", userUUID).Error; err != nil {
 		c.JSON(400, gin.H{
 			"error":   true,
 			"message": err.Error(),
@@ -355,9 +355,10 @@ func (tc *TransactionController) GetUserTransaction(c *gin.Context) {
 	}
 
 	var transaction models.Transaction
+	fmt.Println("HERE")
 	if err := tc.GetDb().Preload("Bookings", func(t *gorm.DB) *gorm.DB {
 		return t.Preload("Seat")
-	}).Preload("Bookings.Seat").Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").First(&transaction, "id = ? AND user_id = ? AND paid = true", params.TransactionId, userUUID).Error; err != nil {
+	}).Preload("Screening.Auditorium").Preload("Screening.Movie").Preload("Screening.Cinema").Order("expires_at desc").First(&transaction, "id = ? AND user_id = ? AND paid = true", params.TransactionId, userUUID).Error; err != nil {
 		c.JSON(400, gin.H{
 			"error":   true,
 			"message": err.Error(),
