@@ -10,8 +10,10 @@ export default function Auth() {
     try {
       const { error } = await client.signUp(email, "test12345", password);
       if (error) throw error;
-      Router.push("/");
-      return "Successfully signed up and logged in!";
+      setTimeout(() => {
+        Router.push("/signin");
+      }, 1000);
+      return "Successfully signed up. Please sign in!";
     } catch (error) {
       return error || error.error_description || error.message;
     }

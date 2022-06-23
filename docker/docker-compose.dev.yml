@@ -79,7 +79,7 @@ services:
     #   NEXT_PUBLIC_GO_AUTH_SERVER_URL: "http://go-auth-api:8080/api/v1/auth/"
 
   postgresdb:
-    image: postgres:latest
+    image: postgres:13.6
     container_name: postgres
     restart: always
     environment:

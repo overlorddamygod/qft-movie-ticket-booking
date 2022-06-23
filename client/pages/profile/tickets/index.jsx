@@ -56,7 +56,7 @@ export const getServerSideProps = async ({ req }) => {
 
     return {
       props: {
-        booking: null,
+        bookings: [],
         error: true,
       },
     };
