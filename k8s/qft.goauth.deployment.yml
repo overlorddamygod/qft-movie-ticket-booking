@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: qft-auth
-        image: overlord077/goauth
+        image: overlord077/goauth:2c44c28d29cb835ef79fde6ee29dd203763b9c33
         imagePullPolicy: Always
         resources:
           limits:
