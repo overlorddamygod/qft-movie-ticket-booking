@@ -25,9 +25,9 @@ func NewBookingController(config *configs.Config, db *gorm.DB) *BookingControlle
 }
 
 type CreateBookingParams struct {
-	SeatID       int `json:"seat_id" binding:"required"`
-	AuditoriumID int `json:"auditorium_id" binding:"required"`
-	ScreeningID  int `json:"screening_id" binding:"required"`
+	SeatID int `json:"seat_id" binding:"required"`
+	// AuditoriumID int `json:"auditorium_id" binding:"required"`
+	ScreeningID int `json:"screening_id" binding:"required"`
 	// Status       int8   `json:"status" binding:"required"`
 }
 
@@ -89,7 +89,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 		}
 
 		var booked models.Booking
-		result = tx.Joins("Transaction").First(&booked, `seat_id = ? AND auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR "Transaction".paid = true)`, params.SeatID, params.AuditoriumID, params.ScreeningID)
+		result = tx.Joins("Transaction").First(&booked, `seat_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR "Transaction".paid = true)`, params.SeatID, params.ScreeningID)
 		if result.Error != nil {
 			if result.Error != gorm.ErrRecordNotFound {
 				return result.Error
@@ -108,14 +108,13 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 			booking := models.Booking{
 				SeatId:        params.SeatID,
-				AuditoriumId:  params.AuditoriumID,
 				ScreeningId:   params.ScreeningID,
 				TransactionId: transaction.Id,
 				UserId:        userUUID,
 				Status:        2,
 			}
 			if err := tx.Create(&booking).Error; err != nil {
-				return err
+				return errors.New("error creating booking" + err.Error())
 			}
 			return nil
 		}

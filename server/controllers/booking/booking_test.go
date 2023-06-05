@@ -44,7 +44,7 @@ func TestConcurrency(t *testing.T) {
 		),
 	)
 
-	var userToken []string = []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGl0eV90eXBlIjoiZW1haWwiLCJ1c2VyX2lkIjoiOTQxMWQ5ZGMtMGY0NC00OWE3LWFiYjgtZjcwNGNhZDFiYTJkIiwiZW1haWwiOiJ0ZXN0MTIzQGdtYWlsLmNvbSIsImV4cCI6MTY1NzI5NDMyMH0.lYBAFB-jo8lalj1Mad22vnsiATs2c8_P6d5FCZ12Z7k", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGl0eV90eXBlIjoiZW1haWwiLCJ1c2VyX2lkIjoiYzQwMzk0MmMtOTdhOC00ODdkLWIzNTktYzAxYTNhNjkyMWI1IiwiZW1haWwiOiJ0ZXN0MTIzNEBnbWFpbC5jb20iLCJleHAiOjE2NTcyOTQzMzN9.E_GDjXF6VnHJ_W-YOaNssuyQKnKpIo_6Z8c3GNoeOIE"}
+	var userToken []string = []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZGVudGl0eV90eXBlIjoiZW1haWwiLCJ1c2VyX2lkIjoiODdjODkxZTItM2EzMS00MDE2LWI0NTQtMTA0N2ZjZTJhZTgzIiwiZW1haWwiOiJ0ZXN0MEBnbWFpbC5jb20iLCJleHAiOjE2ODU5NDcyMTd9.PQDsAbEeIoSWX4BoC-v9shPYUJ3U5MCCREWCJPIC1IE"}
 
 	var wg sync.WaitGroup
 	for i := 0; i < 20; i++ {
@@ -65,7 +65,7 @@ func TestConcurrency(t *testing.T) {
 
 			fmt.Printf("\n#%d user: %d seatid: %d", index, index%2, seat_id)
 
-			json.NewEncoder(&buffer).Encode(map[string]interface{}{"seat_id": seat_id, "screening_id": 12, "auditorium_id": 1})
+			json.NewEncoder(&buffer).Encode(map[string]interface{}{"seat_id": seat_id, "screening_id": 2, "auditorium_id": 1})
 
 			req := httptest.NewRequest(http.MethodPost, "/api/v1/booking", &buffer)
 			req.Header.Set("Content-Type", "application/json")

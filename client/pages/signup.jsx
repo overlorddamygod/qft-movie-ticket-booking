@@ -34,7 +34,7 @@ export default function Auth() {
         />
         <div className="my-5">
           {"Already have an account? "}
-          <Link href="/signin">
+          <Link href="/signin" legacyBehavior>
             <button className="shadow ml-2 bg-emerald-500 hover:bg-emerald-400 focus:shadow-outline focus:outline-none text-white font-bold py-0.5 px-1 rounded">
               Sign In
             </button>

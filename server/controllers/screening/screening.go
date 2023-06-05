@@ -63,7 +63,7 @@ func (sc *ScreeningController) GetScreening(c *gin.Context) {
 	// sc.GetDb().Find()
 	var booked []models.Booking
 
-	result := sc.GetDb().Joins("Transaction").Find(&booked, `auditorium_id = ? AND bookings.screening_id = ? AND ("Transaction".expires_at > now() OR paid = true)`, screening.AuditoriumId, screening.Id)
+	result := sc.GetDb().Joins("Transaction").Find(&booked, `bookings.screening_id = ? AND ("Transaction".expires_at > now() OR paid = true)`, screening.Id)
 
 	if result.Error != nil {
 		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {

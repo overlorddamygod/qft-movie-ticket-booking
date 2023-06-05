@@ -10,7 +10,7 @@ export default function AuthGuard({ children }) {
       {!session ? (
         <div className="max-w-5xl mx-auto py-20 text-center text-xl">
           Requires Authentication Please{" "}
-          <Link href="/signin">
+          <Link href="/signin" legacyBehavior>
             <span className="text-blue-500 cursor-pointer hover:underline">
               sign in.
             </span>

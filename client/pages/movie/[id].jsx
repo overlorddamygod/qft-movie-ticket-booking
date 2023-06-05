@@ -217,7 +217,7 @@ const ShowPage = ({ movie, cinemas }) => {
         const grid = [...seatsGrid];
         grid[rowIndex][columnIndex].status =
           grid[rowIndex][columnIndex].status === 1 ? 2 : 1;
-        const selected = [...selectedSeats];
+        let selected = [...selectedSeats];
 
         if (status === 1) {
           selected.push(grid[rowIndex][columnIndex]);
@@ -271,7 +271,7 @@ const ShowPage = ({ movie, cinemas }) => {
       setFromQuery(false);
     }
 
-    const url = `/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`;
+    let url = `/screening?movie_id=${movie_id}&cinema_id=${cinema_id}`;
 
     if (date) {
       url += `&date=${date}`;
@@ -371,7 +371,7 @@ const ShowPage = ({ movie, cinemas }) => {
               </span>
             </p>
             <p className="my-3 text-sm text-[#455B77]">{movie.description}</p>
-            <Link href={movie.trailer}>
+            <Link href={movie.trailer} legacyBehavior>
               <button className="border-[#C6AA55] border-2 py-2 px-2 mt-4 rounded-md hover:scale-105">
                 Watch Trailer
               </button>
@@ -640,7 +640,7 @@ export const getServerSideProps = async ({ params }) => {
     const cinemasRes = await ssrAxiosClient.get("/cinema");
 
     const { data: cinemas } = cinemasRes.data;
-
+    console.log("DATAAA", cinemas)
     return {
       props: {
         cinemas,
