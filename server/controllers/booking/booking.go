@@ -10,7 +10,6 @@ import (
 	"github.com/overlorddamygod/qft-server/controllers"
 	TransactionController "github.com/overlorddamygod/qft-server/controllers/transaction"
 	"github.com/overlorddamygod/qft-server/models"
-
 	"gorm.io/gorm"
 )
 
@@ -55,31 +54,46 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 
 	bookedStatus := "booked"
 
+	var seat models.Seat
+	result := bc.GetDb().First(&seat, "id = ?", params.SeatID)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.JSON(404, gin.H{
+				"error":   true,
+				"message": "seat not found",
+			})
+			return
+		}
+
+		c.JSON(500, gin.H{
+			"error":   true,
+			"message": "error getting seat",
+		})
+		return
+	}
+
+	if !seat.Available {
+		c.JSON(404, gin.H{
+			"error":   true,
+			"message": "seat not available",
+		})
+		return
+	}
+	t, err := TransactionController.GetCreateTransaction(bc.GetDb(), userUUID, params.ScreeningID)
+	transaction = t
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error":   true,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	fmt.Println("TRANSACTIONS: ", transaction)
+
 	err = bc.GetDb().Transaction(func(tx *gorm.DB) error {
-		var seat models.Seat
-		result := tx.First(&seat, "id = ?", params.SeatID)
-
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				return errors.New("seat not found")
-			}
-
-			return errors.New("error getting seat")
-		}
-
-		if !seat.Available {
-			return errors.New("seat is not available")
-		}
-
-		t, err := TransactionController.GetCreateTransaction(tx, userUUID, params.ScreeningID)
-		transaction = t
-
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("TRANSACTIONS: ", transaction)
-
 		if err := tx.First(&models.Screening{}, "id = ? AND start_time > now()", params.ScreeningID).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return errors.New("screening not found")
@@ -114,7 +128,7 @@ func (bc *BookingController) CreateBooking(c *gin.Context) {
 				Status:        2,
 			}
 			if err := tx.Create(&booking).Error; err != nil {
-				return errors.New("error creating booking" + err.Error())
+				return err
 			}
 			return nil
 		}

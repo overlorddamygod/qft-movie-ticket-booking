@@ -88,7 +88,7 @@ func GetCreateTransaction(db *gorm.DB, userId uuid.UUID, screeningId int) (model
 					return result.Error
 				}
 			} else {
-				return errors.New("server error")
+				return result.Error
 			}
 		}
 

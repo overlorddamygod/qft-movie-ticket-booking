@@ -64,14 +64,14 @@ func main() {
 		go func(index int) {
 			defer wg.Done()
 
-			var seat_id int = getRandomSeat(344, 400)
+			var seat_id int = getRandomSeat(343, 452)
 
 			user := getRandomUser(users)
 
 			fmt.Printf("\n#%d user: %s seatid: %d", index, user, seat_id)
 
 			var buffer bytes.Buffer
-			json.NewEncoder(&buffer).Encode(map[string]interface{}{"seat_id": seat_id, "screening_id": 2})
+			json.NewEncoder(&buffer).Encode(map[string]interface{}{"seat_id": seat_id, "screening_id": 3})
 
 			req, err := http.NewRequest(http.MethodPost, "http://localhost:8081/api/v1/booking", &buffer)
 			req.Header.Set("Content-Type", "application/json")
@@ -91,7 +91,7 @@ func main() {
 				return
 			}
 
-			fmt.Println(string(response))
+			fmt.Println("RES", resp.StatusCode, string(response))
 		}(i)
 	}
 
