@@ -29,6 +29,8 @@ func RegisterServer(config *configs.Config, db *gorm.DB, storage *storage_go.Cli
 			c.Writer.Header().Set("Content-Type", "application/json")
 			c.Next()
 		})
+		middlewares := middlewares.NewMiddlewares(db)
+
 		transactionGroup := v1.Group("transaction")
 		{
 			transactionC := transaction.NewTransactionController(config, db, storage)
@@ -42,17 +44,19 @@ func RegisterServer(config *configs.Config, db *gorm.DB, storage *storage_go.Cli
 
 		screeningGroup := v1.Group("screening")
 		{
-			// screeningGroup.Use(middlewares.IsLoggedIn())
 			screeningC := screening.NewScreeningController(config, db)
+
 			screeningGroup.GET("", screeningC.GetScreenings)
-			screeningGroup.POST("", screeningC.CreateScreening)
 			screeningGroup.GET("/:id", middlewares.IsLoggedIn(), screeningC.GetScreening)
+
+			screeningGroup.POST("", middlewares.IsLoggedIn(), middlewares.IsAdmin(), screeningC.CreateScreening)
+			screeningGroup.POST("/delete", middlewares.IsLoggedIn(), middlewares.IsAdmin(), screeningC.DeleteScreening)
 		}
 		bookingGroup := v1.Group("booking")
 		{
 			bookingC := booking.NewBookingController(config, db)
-			bookingGroup.Use(middlewares.IsLoggedIn())
-			bookingGroup.POST("", bookingC.CreateBooking)
+			// bookingGroup.Use(middlewares.IsLoggedIn())
+			bookingGroup.POST("", middlewares.IsLoggedIn(), bookingC.CreateBooking)
 		}
 
 		cinemaGroup := v1.Group("cinema")
@@ -66,13 +70,17 @@ func RegisterServer(config *configs.Config, db *gorm.DB, storage *storage_go.Cli
 		auditoriumGroup := v1.Group("auditorium")
 		{
 			audiC := auditorium.NewAuditoriumController(config, db)
-			auditoriumGroup.POST("/:audi_id/seats", audiC.CustomizeSeat)
+
+			auditoriumGroup.POST("/:audi_id/seats", middlewares.IsLoggedIn(), middlewares.IsAdmin(), audiC.CustomizeSeat)
+			auditoriumGroup.POST("/delete", middlewares.IsLoggedIn(), middlewares.IsAdmin(), audiC.DeleteAuditorium)
 		}
 
 		movieGroup := v1.Group("movie")
 		{
 			movieC := movie.NewMovieController(config, db)
-			movieGroup.POST("", movieC.CreateMovie)
+			movieGroup.POST("", middlewares.IsLoggedIn(), middlewares.IsAdmin(), movieC.CreateMovie)
+			movieGroup.POST("/delete", middlewares.IsLoggedIn(), middlewares.IsAdmin(), movieC.DeleteMovie)
+
 			// cinemaGroup.Use(middlewares.IsLoggedIn())
 			movieGroup.GET("/:id", movieC.GetMovie)
 			movieGroup.GET("", movieC.GetMovies)

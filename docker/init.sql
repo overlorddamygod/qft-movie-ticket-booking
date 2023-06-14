@@ -121,7 +121,6 @@ CREATE TABLE IF NOT EXISTS public.movies (
 INSERT INTO public.movies (id, name, description, banner, trailer, length, release_date, created_at) VALUES
 ('03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', 'Bhool Bhulaiyaa 2', 'A sequel to the original movie Bhool Bhulaiyaa.', 'https://i.imgur.com/ZTT1Jzy.jpg', NULL, 143, '2022-05-20 14:21:33+00', '2022-05-28 08:36:33+00'),
 ('d031b248-41d5-49dc-8c3f-9af5203e8931', 'Doctor Strange In the Multiverse of Madness', 'Dr. Stephen Strange casts a forbidden spell that opens the doorway to the multiverse, including alternate versions of himself, whose threat to humanity is too great for the combined forces of Strange, Wong, and Wanda Maximoff.', 'https://i.imgur.com/kgp10GN.jpg', 'https://www.youtube.com/watch?v=aWzlQ2N6qqg', 126, '2022-05-06 14:19:59+00', '2022-05-28 08:34:59+00'),
-('628b1d5b-b45f-484f-94c3-145972b0713b', 'Jurassic World Dominion', 'Four years after the destruction of Isla Nublar, dinosaurs now live--and hunt--alongside humans all over the world. This fragile balance will reshape the future and determine, once and for all, whether human beings are to remain the apex predators on a planet they now share with history''s most fearsome creatures in a new Era.', 'https://api.qfxcinemas.com/api/public/ThumbnailImage?eventId=7732', 'https://www.youtube.com/watch?v=fb5ELWi-ekk', 146, '2022-06-10 00:00:00+00', '2022-06-22 08:57:51.118347+00');
 
 -- END TABLE public.movies
 
@@ -170,27 +169,6 @@ CREATE TABLE IF NOT EXISTS public.screenings (
 -- Inserting 21 rows into public.screenings
 -- Insert batch #1
 INSERT INTO public.screenings (id, auditorium_id, cinema_id, movie_id, created_at, start_time) VALUES
-(35, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-08 12:05:28.629594+00', '2022-06-08 17:15:00+00'),
-(36, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-09 08:24:23.202361+00', '2022-06-09 12:15:00+00'),
-(37, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-09 08:50:24.198283+00', '2022-06-01 14:15:00+00'),
-(38, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-09 08:52:39.79983+00', '2022-06-09 14:15:00+00'),
-(39, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-09 08:52:45.96363+00', '2022-06-09 12:15:00+00'),
-(40, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', '03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', '2022-06-09 08:53:40.890616+00', '2022-06-10 12:15:00+00'),
-(41, 3, 'd6fbf6b2-2090-4580-b2b5-3bb8d710d396', '03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', '2022-06-09 08:53:48.14095+00', '2022-06-10 09:15:00+00'),
-(42, 3, 'd6fbf6b2-2090-4580-b2b5-3bb8d710d396', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-09 08:53:54.827124+00', '2022-06-10 10:15:00+00'),
-(43, 3, 'd6fbf6b2-2090-4580-b2b5-3bb8d710d396', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-09 08:54:05.066404+00', '2022-06-09 15:15:00+00'),
-(44, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-10 12:42:05.897828+00', '2022-06-11 08:15:00+00'),
-(45, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-11 08:18:19.437785+00', '2022-06-13 08:15:00+00'),
-(46, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-11 08:18:32.280362+00', '2022-06-12 07:15:00+00'),
-(47, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', '03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', '2022-06-11 08:18:40.139608+00', '2022-06-12 07:15:00+00'),
-(48, 3, 'd6fbf6b2-2090-4580-b2b5-3bb8d710d396', '03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', '2022-06-11 08:18:50.376922+00', '2022-06-12 11:15:00+00'),
-(49, 3, 'd6fbf6b2-2090-4580-b2b5-3bb8d710d396', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-11 08:18:54.403942+00', '2022-06-12 10:15:00+00'),
-(1, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-11 09:14:03.685464+00', '2022-06-14 13:30:00+00'),
-(4, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-11 09:17:37.785722+00', '2022-06-14 10:00:00+00'),
-(5, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-22 09:07:53.28757+00', '2022-06-14 13:30:00+00'),
-(6, 1, 'af367117-be73-40e3-bdbd-1161a4b60eda', 'd031b248-41d5-49dc-8c3f-9af5203e8931', '2022-06-22 09:08:11.409366+00', '2022-06-23 13:30:00+00'),
-(7, 3, 'd6fbf6b2-2090-4580-b2b5-3bb8d710d396', '628b1d5b-b45f-484f-94c3-145972b0713b', '2022-06-22 09:41:41.354663+00', '2022-06-22 15:15:00+00'),
-(8, 2, 'af367117-be73-40e3-bdbd-1161a4b60eda', '03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', '2022-06-22 09:50:31.456651+00', '2022-06-22 12:15:00+00');
 
 -- END TABLE public.screenings
 
@@ -515,44 +493,5 @@ INSERT INTO public.transactions (id, user_id, screening_id, created_at, expires_
 
 -- END TABLE public.transactions
 
--- BEGIN TABLE public.users
-DROP TABLE IF EXISTS public.users CASCADE;
-
-
-CREATE TABLE IF NOT EXISTS public.users (
-	id uuid DEFAULT uuid_generate_v4() NOT NULL,
-	created_at timestamp with time zone,
-	updated_at timestamp with time zone,
-	deleted_at timestamp with time zone,
-	name text,
-	email text UNIQUE,
-	"password" text,
-	identity_type text DEFAULT 'email'::text,
-	identities jsonb,
-	password_reset_token text,
-	password_reset_token_at timestamp with time zone,
-	token text,
-	token_sent_at timestamp with time zone,
-	confirmation_token text,
-	confirmation_token_at timestamp with time zone,
-	confirmed boolean DEFAULT false,
-	confirmed_at timestamp with time zone,
-	PRIMARY KEY(id)
-);
-
-
--- Inserting 2 rows into public.users
--- Insert batch #1
-INSERT INTO public.users (id, created_at, updated_at, deleted_at, name, email, "password", identity_type, identities, password_reset_token, password_reset_token_at, token, token_sent_at, confirmation_token, confirmation_token_at, confirmed, confirmed_at) VALUES
-('1cd24c7a-6ca1-42d5-8ac7-eab3129135c9', '2022-06-10 15:03:14.695068+00', '2022-06-10 15:03:14.695068+00', NULL, 'overlord', 'overlord.damygod@gmail.com', '$2a$10$7Yu6WQ/frp9URnSvxgVBzuh.DGu1P0jsYkdB3sPN3uHcl5fzsuiu6', 'email', NULL, '', '0001-01-01 00:00:00+00', '', '0001-01-01 00:00:00+00', '', '0001-01-01 00:00:00+00', 'True', '2022-06-10 15:03:14.695036+00'),
-('9dcfab76-d8e2-4ace-83b0-61eabcf4e322', '2022-06-11 11:08:14.374213+00', '2022-06-11 11:08:14.374213+00', NULL, 'Overlord Damygod', 'overlord.damy1111god@gmail.com', '$2a$10$82tBs6ZsM9X18BdZtq4bFew1Sg/41JkI7GKesJkxj6UUOyqCZNtWy', 'email', NULL, '', '0001-01-01 00:00:00+00', '', '0001-01-01 00:00:00+00', '', '0001-01-01 00:00:00+00', 'True', '2022-06-11 11:08:14.372987+00');
-
--- END TABLE public.users
-
-ALTER TABLE IF EXISTS public.refresh_tokens
-	ADD CONSTRAINT fk_users_refresh_token
-	FOREIGN KEY (user_id)
-	REFERENCES public.users (id)
-	ON DELETE CASCADE;
 
 CREATE INDEX index_movies_on_name ON movies USING gin(to_tsvector('simple', name));

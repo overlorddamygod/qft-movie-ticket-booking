@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/overlorddamygod/qft-server/configs"
 	"github.com/overlorddamygod/qft-server/controllers"
 	"github.com/overlorddamygod/qft-server/models"
@@ -125,5 +126,35 @@ func (ac *AuditoriumController) CustomizeSeat(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"error":   false,
 		"message": "",
+	})
+}
+
+type DeleteAuditoriumParams struct {
+	Id uuid.UUID `json:"id"`
+}
+
+func (sc *AuditoriumController) DeleteAuditorium(c *gin.Context) {
+	var params DeleteAuditoriumParams
+	if err := c.Bind(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Invalid params",
+		})
+		return
+	}
+
+	res := sc.GetDb().Delete(&models.Auditorium{}, "id = ?", params.Id)
+
+	if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   true,
+			"message": "Error deleting auditorium",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"error":   false,
+		"message": "Success",
 	})
 }

@@ -268,3 +268,33 @@ func (sc *ScreeningController) CreateScreening(c *gin.Context) {
 		"message": "Success",
 	})
 }
+
+type DeleteScreeningParams struct {
+	Id uuid.UUID `json:"id"`
+}
+
+func (sc *ScreeningController) DeleteScreening(c *gin.Context) {
+	var params DeleteScreeningParams
+	if err := c.Bind(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   true,
+			"message": "Invalid params",
+		})
+		return
+	}
+
+	res := sc.GetDb().Delete(&models.Screening{}, "id = ?", params.Id)
+
+	if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   true,
+			"message": "Error deleting screening",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"error":   false,
+		"message": "Success",
+	})
+}
