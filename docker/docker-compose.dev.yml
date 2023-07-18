@@ -94,7 +94,7 @@ services:
       - qftNetwork
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-dev:/var/lib/postgresql/data
 
   pgadmin:
     image: dpage/pgadmin4
@@ -108,12 +108,12 @@ services:
     networks:
       - qftNetwork
     volumes:
-      - pgadmin-data:/var/lib/pgadmin
+      - pgadmin-data-dev:/var/lib/pgadmin
 
 networks:
   qftNetwork:
     driver: bridge
 
 volumes: 
-  pgdata:
-  pgadmin-data:
+  pgdata-dev:
+  pgadmin-data-dev:

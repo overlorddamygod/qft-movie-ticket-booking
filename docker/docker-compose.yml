@@ -20,7 +20,28 @@ services:
     networks:
       - qftNetwork
 
-  goAuth:
+  qft-ui:
+    container_name: qft-ui
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+      args:
+        SUPABASE_URL: "${NEXT_PUBLIC_SUPABASE_URL}"
+        SUPABASE_ANON_KEY: "${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+        STORAGE_URL: "${NEXT_PUBLIC_STORAGE_URL}"
+        STRIPE_PUBLIC_KEY: "${NEXT_PUBLIC_STRIPE_PUBLIC_KEY}"
+        SERVER_URL: "${NEXT_PUBLIC_SERVER_URL}"
+        SSR_SERVER_URL: "${NEXT_PUBLIC_SSR_SERVER_URL}"
+        GO_AUTH_SERVER_URL: "${NEXT_PUBLIC_GO_AUTH_SERVER_URL}"
+    ports:
+      - 3000:3000
+    stdin_open: true
+    depends_on:
+      - qft-api
+    networks:
+      - qftNetwork
+
+  go-auth:
     container_name: go-auth-api
     image: overlord077/goauth
     env_file:
@@ -36,9 +57,11 @@ services:
     networks:
       - qftNetwork
 
-  qftApi:
+  qft-api:
     container_name: qft-api
-    image: overlord077/qft
+    build:
+      context: ../server
+      dockerfile: Dockerfile
     env_file:
       - .env
     environment:
@@ -66,7 +89,26 @@ services:
       - qftNetwork
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+      
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    networks:
+      - qftNetwork
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
 
 networks:
   qftNetwork:
     driver: bridge
+
+volumes: 
+  pgdata:
+  pgadmin-data:

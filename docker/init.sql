@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS public.movies (
 -- Insert batch #1
 INSERT INTO public.movies (id, name, description, banner, trailer, length, release_date, created_at) VALUES
 ('03aedbb8-19a3-4ace-bb0c-86cf3f1bf40b', 'Bhool Bhulaiyaa 2', 'A sequel to the original movie Bhool Bhulaiyaa.', 'https://i.imgur.com/ZTT1Jzy.jpg', NULL, 143, '2022-05-20 14:21:33+00', '2022-05-28 08:36:33+00'),
-('d031b248-41d5-49dc-8c3f-9af5203e8931', 'Doctor Strange In the Multiverse of Madness', 'Dr. Stephen Strange casts a forbidden spell that opens the doorway to the multiverse, including alternate versions of himself, whose threat to humanity is too great for the combined forces of Strange, Wong, and Wanda Maximoff.', 'https://i.imgur.com/kgp10GN.jpg', 'https://www.youtube.com/watch?v=aWzlQ2N6qqg', 126, '2022-05-06 14:19:59+00', '2022-05-28 08:34:59+00'),
+('d031b248-41d5-49dc-8c3f-9af5203e8931', 'Doctor Strange In the Multiverse of Madness', 'Dr. Stephen Strange casts a forbidden spell that opens the doorway to the multiverse, including alternate versions of himself, whose threat to humanity is too great for the combined forces of Strange, Wong, and Wanda Maximoff.', 'https://i.imgur.com/kgp10GN.jpg', 'https://www.youtube.com/watch?v=aWzlQ2N6qqg', 126, '2022-05-06 14:19:59+00', '2022-05-28 08:34:59+00');
 
 -- END TABLE public.movies
 
@@ -168,7 +168,6 @@ CREATE TABLE IF NOT EXISTS public.screenings (
 
 -- Inserting 21 rows into public.screenings
 -- Insert batch #1
-INSERT INTO public.screenings (id, auditorium_id, cinema_id, movie_id, created_at, start_time) VALUES
 
 -- END TABLE public.screenings
 

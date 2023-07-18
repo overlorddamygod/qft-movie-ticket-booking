@@ -13,19 +13,20 @@ function Layout({ auto = true, showNavs = true, children }) {
     // dispatch(setSession(supabase.auth.session()));
     // console.log(supabase.auth.session())
     const listener = async (user) => {
+    
       // if (user) {
       //   dispatch(setSession(user));
       // }
-      console.log("AUTH CHANGED", user);
+      // console.log("AUTH CHANGED", user, client);
       dispatch(setSession(user));
 
-      // if (user) {
-      await axios.post("/api/authToken", null, {
-        headers: {
-          Authorization: `${client.accessToken || ""}`,
-        },
-      });
-      // }
+      if (!user) {
+        const expires = new Date(0).toUTCString();
+        document.cookie = `authToken=; path=/; expires=${expires}; SameSite=Lax; secure`
+      } else {
+        const maxAge = 100 * 365 * 24 * 60 * 60 // 100 years, never expires
+        document.cookie = `authToken=${client.accessToken}; path=/; expires=${maxAge}; SameSite=Lax; secure`
+      }
     };
     client.onAuthChanged(listener);
     // supabase.auth.onAuthStateChange((_event, session) => {

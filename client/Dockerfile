@@ -29,6 +29,23 @@ WORKDIR /app
 # server for production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+ARG SUPABASE_URL
+ARG SUPABASE_ANON_KEY
+ARG STORAGE_URL
+ARG STRIPE_PUBLIC_KEY
+ARG SERVER_URL
+ARG SSR_SERVER_URL
+ARG GO_AUTH_SERVER_URL
+
+ENV NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_STORAGE_URL=$STORAGE_URL
+ENV NEXT_PUBLIC_STRIPE_PUBLIC_KEY=$STRIPE_PUBLIC_KEY
+ENV NEXT_PUBLIC_SERVER_URL=$SERVER_URL
+ENV NEXT_PUBLIC_SSR_SERVER_URL=$SSR_SERVER_URL
+ENV NEXT_PUBLIC_GO_AUTH_SERVER_URL=$GO_AUTH_SERVER_URL
+
 RUN yarn build
 
 # Remove all the development dependencies since we don't
@@ -58,7 +75,6 @@ COPY --from=BUILD_IMAGE --chown=nextjs:nodejs /app/.next ./.next
 
 # 4. OPTIONALLY the next.config.js, if your app has one
 # COPY --from=BUILD_IMAGE --chown=nextjs:nodejs /app/next.config.js  ./
-
 USER nextjs
 
 EXPOSE 3000
