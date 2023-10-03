@@ -4,7 +4,7 @@
 # We're starting with the same base image, but we're declaring
 # that this block outputs an image called DEPS that we
 # won't be deploying - it just installs our Yarn deps
-FROM node:lts AS deps
+FROM node:20.1.0 AS deps
 
 # If you need libc for any of your deps, uncomment this line:
 # RUN apk add --no-cache libc6-compat
@@ -14,7 +14,9 @@ FROM node:lts AS deps
 # if these dependency files change. Nice speed hack!
 WORKDIR /app
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+# RUN yarn add --dev node-gyp
+
+RUN yarn install --frozen-lockfile --ignore-scripts --prefer-offline
 
 # END DEPS IMAGE
 
